@@ -568,7 +568,7 @@ void __kmp_gtid_set_specific(int gtid) {
   if (__kmp_init_gtid) {
     KA_TRACE(50, ("__kmp_gtid_set_specific: T#%d key:%d\n", gtid,
                   __kmp_gtid_threadprivate_key));
-    if (!TlsSetValue(__kmp_gtid_threadprivate_key, (LPVOID)(gtid + 1)))
+    if (!TlsSetValue(__kmp_gtid_threadprivate_key, (LPVOID)(intptr_t)(gtid + 1)))
       KMP_FATAL(TLSSetValueFailed);
   } else {
     KA_TRACE(50, ("__kmp_gtid_set_specific: runtime shutdown, returning\n"));
@@ -1356,7 +1356,7 @@ static void __kmp_reap_common(kmp_info_t *th) {
      any particular value. */
   if (exit_val == STILL_ACTIVE) {
     KA_TRACE(1, ("__kmp_reap_common: thread still active.\n"));
-  } else if ((void *)exit_val != (void *)th) {
+  } else if ((void *)(intptr_t)exit_val != (void *)th) {
     KA_TRACE(1, ("__kmp_reap_common: ExitProcess / TerminateThread used?\n"));
   }
 
@@ -1637,7 +1637,7 @@ int __kmp_get_load_balance(int max) {
     // threads on all cores. So, we don't consider the running threads of this
     // process.
     if (pid != 0) {
-      for (int i = 0; i < num; ++i) {
+      for (ULONG i = 0; i < num; ++i) {
         THREAD_STATE state = spi->Threads[i].State;
         // Count threads that have Ready or Running state.
         // !!! TODO: Why comment does not match the code???
