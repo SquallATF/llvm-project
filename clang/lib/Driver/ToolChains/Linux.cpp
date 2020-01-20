@@ -21,6 +21,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
 #include "llvm/Support/ScopedPrinter.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include <system_error>
@@ -271,6 +272,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   const bool IsHexagon = Arch == llvm::Triple::hexagon;
   const bool IsRISCV = Triple.isRISCV();
   const bool IsCSKY = Triple.isCSKY();
+  const bool IsOpenWrt = Triple.isOpenWrt();
 
   if (IsCSKY && !SelectedMultilibs.empty())
     SysRoot = SysRoot + SelectedMultilibs.back().osSuffix();
@@ -328,6 +330,16 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
         concat(SysRoot, "/usr/lib", MultiarchTriple,
                llvm::to_string(Triple.getEnvironmentVersion().getMajor())),
         Paths);
+  }
+
+  if (IsOpenWrt) {
+    std::optional<std::string> StagingDirValue =
+        llvm::sys::Process::GetEnv("STAGING_DIR");
+    StringRef StagingDir = *StagingDirValue;
+    if (!StagingDir.empty()) {
+      addPathIfExists(D, concat(StagingDir, "/usr/lib"), Paths);
+      ExtraOpts.push_back("-rpath-link=" + concat(StagingDir, "/usr/lib"));
+    }
   }
 
   addPathIfExists(D, concat(SysRoot, "/usr/lib", MultiarchTriple), Paths);
@@ -392,6 +404,15 @@ std::string Linux::computeSysRoot() const {
     std::string AndroidSysRootPath = (ClangDir + "/../sysroot").str();
     if (getVFS().exists(AndroidSysRootPath))
       return AndroidSysRootPath;
+  }
+
+  if (getTriple().isOpenWrt()) {
+    // OpenWrt toolchains typically include a sysroot at ../sysroot relative to
+    // the clang binary.
+    const StringRef ClangDir = getDriver().Dir;
+    std::string OpenWrtSysRootPath = (ClangDir + "/../sysroot").str();
+    if (getVFS().exists(OpenWrtSysRootPath))
+      return OpenWrtSysRootPath;
   }
 
   if (getTriple().isCSKY()) {
@@ -670,6 +691,22 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
 
   if (getTriple().getOS() == llvm::Triple::RTEMS)
     return;
+
+  if (getTriple().isMusl() &&
+      D.getVFS().exists(concat(SysRoot, "/include/fortify")))
+    addExternCSystemInclude(DriverArgs, CC1Args,
+                            concat(SysRoot, "/include/fortify"));
+
+  if (getTriple().isOpenWrt()) {
+    std::optional<std::string> StagingDirValue =
+        llvm::sys::Process::GetEnv("STAGING_DIR");
+    StringRef StagingDir = *StagingDirValue;
+    if (!StagingDir.empty()) {
+      CC1Args.push_back("-idirafter");
+      CC1Args.push_back(
+          DriverArgs.MakeArgString(concat(StagingDir, "/usr/include")));
+    }
+  }
 
   // Add an include of '/include' directly. This isn't provided by default by
   // system GCCs, but is often used with cross-compiling GCCs, and harmless to

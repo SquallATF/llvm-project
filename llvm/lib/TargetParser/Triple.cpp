@@ -250,6 +250,7 @@ StringRef Triple::getVendorTypeName(VendorType Kind) {
   case MipsTechnologies: return "mti";
   case NVIDIA: return "nvidia";
   case OpenEmbedded: return "oe";
+  case OpenWrt: return "openwrt";
   case PC: return "pc";
   case SCEI: return "scei";
   case SUSE: return "suse";
@@ -640,6 +641,7 @@ static Triple::VendorType parseVendor(StringRef VendorName) {
     .Case("mesa", Triple::Mesa)
     .Case("suse", Triple::SUSE)
     .Case("oe", Triple::OpenEmbedded)
+    .Case("openwrt", Triple::OpenWrt)
     .Default(Triple::UnknownVendor);
 }
 
