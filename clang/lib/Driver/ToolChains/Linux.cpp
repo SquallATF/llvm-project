@@ -355,6 +355,15 @@ std::string Linux::computeSysRoot() const {
       return AndroidSysRootPath;
   }
 
+  if (getTriple().isOpenWrt()) {
+    // OpenWrt toolchains typically include a sysroot at ../sysroot relative to
+    // the clang binary.
+    const StringRef ClangDir = getDriver().getInstalledDir();
+    std::string OpenWrtSysRootPath = (ClangDir + "/../sysroot").str();
+    if (getVFS().exists(OpenWrtSysRootPath))
+      return OpenWrtSysRootPath;
+  }
+
   if (!GCCInstallation.isValid() || !getTriple().isMIPS())
     return std::string();
 

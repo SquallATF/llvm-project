@@ -816,6 +816,12 @@ def Xopenmp_target_EQ : JoinedAndSeparate<["-"], "Xopenmp-target=">,
 def z : Separate<["-"], "z">, Flags<[LinkerInput, RenderAsInput]>,
   HelpText<"Pass -z <arg> to the linker">, MetaVarName<"<arg>">,
   Group<Link_Group>;
+def znow : Flag<["-"], "znow">, HelpText<"Pass -z now to the linker">,
+  Alias<z>, AliasArgs<["now"]>,
+  Group<Link_Group>;
+def zrelro : Flag<["-"], "zrelro">, HelpText<"Pass -z relro to the linker">,
+  Alias<z>, AliasArgs<["relro"]>,
+  Group<Link_Group>;
 def Xlinker : Separate<["-"], "Xlinker">, Flags<[LinkerInput, RenderAsInput]>,
   HelpText<"Pass <arg> to the linker">, MetaVarName<"<arg>">,
   Group<Link_Group>;
