@@ -293,7 +293,8 @@ public:
     OpenEmbedded,
     Intel,
     Meta,
-    LastVendorType = Meta
+    OpenWrt,
+    LastVendorType = OpenWrt
   };
   enum OSType {
     UnknownOS,
@@ -737,6 +738,8 @@ public:
     return isMacOSX() || (isOSDarwin() && (isSimulatorEnvironment() ||
                                            isMacCatalystEnvironment()));
   }
+
+  bool isOpenWrt() const { return getVendor() == Triple::OpenWrt; }
 
   bool isOSNetBSD() const { return getOS() == Triple::NetBSD; }
 
