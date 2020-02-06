@@ -24,28 +24,27 @@ std::string DIATable::getName() const {
 }
 
 PDB_TableType DIATable::getTableType() const {
-  _bstr_t Holder;
-  if (S_OK != Table->get_name(Holder.GetAddress()))
+  _bstr_t Name16;
+  if (S_OK != Table->get_name(Name16.GetAddress()))
     return PDB_TableType::TableInvalid;
-  wchar_t *Name16 = Holder;
 
-  if (Name16 == DiaTable_Symbols)
+  if (Name16 == _bstr_t(DiaTable_Symbols))
     return PDB_TableType::Symbols;
-  if (Name16 == DiaTable_SrcFiles)
+  if (Name16 == _bstr_t(DiaTable_SrcFiles))
     return PDB_TableType::SourceFiles;
-  if (Name16 == DiaTable_Sections)
+  if (Name16 == _bstr_t(DiaTable_Sections))
     return PDB_TableType::SectionContribs;
-  if (Name16 == DiaTable_LineNums)
+  if (Name16 == _bstr_t(DiaTable_LineNums))
     return PDB_TableType::LineNumbers;
-  if (Name16 == DiaTable_SegMap)
+  if (Name16 == _bstr_t(DiaTable_SegMap))
     return PDB_TableType::Segments;
-  if (Name16 == DiaTable_InjSrc)
+  if (Name16 == _bstr_t(DiaTable_InjSrc))
     return PDB_TableType::InjectedSources;
-  if (Name16 == DiaTable_FrameData)
+  if (Name16 == _bstr_t(DiaTable_FrameData))
     return PDB_TableType::FrameData;
-  if (Name16 == DiaTable_InputAssemblyFiles)
+  if (Name16 == _bstr_t(DiaTable_InputAssemblyFiles))
     return PDB_TableType::InputAssemblyFiles;
-  if (Name16 == DiaTable_Dbg)
+  if (Name16 == _bstr_t(DiaTable_Dbg))
     return PDB_TableType::Dbg;
   return PDB_TableType::TableInvalid;
 }
