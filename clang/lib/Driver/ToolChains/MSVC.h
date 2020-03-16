@@ -116,6 +116,9 @@ public:
 
   void printVerboseInfo(raw_ostream &OS) const override;
 
+  UnwindLibType
+  GetUnwindLibType(const llvm::opt::ArgList &Args) const override;
+
   bool FoundMSVCInstall() const { return !VCToolChainPath.empty(); }
 
   void
