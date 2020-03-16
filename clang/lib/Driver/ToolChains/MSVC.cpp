@@ -504,6 +504,11 @@ void MSVCToolChain::printVerboseInfo(raw_ostream &OS) const {
   RocmInstallation.print(OS);
 }
 
+ToolChain::UnwindLibType
+MSVCToolChain::GetUnwindLibType(const llvm::opt::ArgList &Args) const {
+  return ToolChain::UNW_None;
+}
+
 std::string
 MSVCToolChain::getSubDirectoryPath(llvm::SubDirectoryType Type,
                                    llvm::StringRef SubdirParent) const {
