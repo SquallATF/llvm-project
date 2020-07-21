@@ -68,7 +68,8 @@ static Error ErrorFromHResult(HRESULT Result, const char *Str, Ts &&... Args) {
 
 static Error LoadDIA(ComPtr<IDiaDataSource> &DiaDataSource) {
   if (SUCCEEDED(CoCreateInstance(
-          CLSID_DiaSource, nullptr, CLSCTX_INPROC_SERVER, IID_IDiaDataSource,
+          __uuidof(DiaSource), nullptr, CLSCTX_INPROC_SERVER,
+          __uuidof(IDiaDataSource),
           reinterpret_cast<LPVOID *>(DiaDataSource.GetAddressOf()))))
     return Error::success();
 
@@ -80,7 +81,7 @@ static Error LoadDIA(ComPtr<IDiaDataSource> &DiaDataSource) {
   const wchar_t *msdia_dll = L"msdia140.dll";
   HRESULT HR;
   if (FAILED(HR = NoRegCoCreate(
-                 msdia_dll, CLSID_DiaSource, IID_IDiaDataSource,
+                 msdia_dll, __uuidof(DiaSource), __uuidof(IDiaDataSource),
                  reinterpret_cast<LPVOID *>(DiaDataSource.GetAddressOf()))))
     return ErrorFromHResult(HR, "Calling NoRegCoCreate");
   return Error::success();
