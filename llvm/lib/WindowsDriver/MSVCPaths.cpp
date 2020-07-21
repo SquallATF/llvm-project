@@ -34,7 +34,7 @@
 #include <windows.h>
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 // Don't support SetupApi on MinGW.
 #define USE_MSVC_SETUP_API
 
