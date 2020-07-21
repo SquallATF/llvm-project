@@ -34,8 +34,7 @@
 #include <windows.h>
 #endif
 
-#ifdef _MSC_VER
-// Don't support SetupApi on MinGW.
+#ifdef _WIN32
 #define USE_MSVC_SETUP_API
 
 // Make sure this comes before MSVCSetupApi.h
