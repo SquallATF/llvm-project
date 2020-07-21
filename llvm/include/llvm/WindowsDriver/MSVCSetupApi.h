@@ -225,6 +225,11 @@ struct DECLSPEC_UUID("B41463C3-8866-43B5-BC33-2B0676F7F42E")
   STDMETHOD(ResolvePath)
   (_In_opt_z_ LPCOLESTR pwszRelativePath, _Out_ BSTR *pbstrAbsolutePath) = 0;
 };
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(ISetupInstance, 0xb41463c3, 0x8866, 0x43b5, 0xbc, 0x33, 0x2b,
+                0x06, 0x76, 0xf7, 0xf4, 0x2e)
+#endif
 #endif
 
 EXTERN_C const IID IID_ISetupInstance2;
@@ -276,6 +281,11 @@ struct DECLSPEC_UUID("89143C9A-05AF-49B0-B717-72E218A2185C")
   STDMETHOD(GetProductPath)
   (_Outptr_result_maybenull_ BSTR *pbstrProductPath) = 0;
 };
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(ISetupInstance2, 0x89143c9a, 0x05af, 0x49b0, 0xb7, 0x17, 0x72,
+                0xe2, 0x18, 0xa2, 0x18, 0x5c)
+#endif
 #endif
 
 EXTERN_C const IID IID_IEnumSetupInstances;
@@ -327,6 +337,11 @@ struct DECLSPEC_UUID("6380BCFF-41D3-4B2E-8B2E-BF8A6810C848")
   /// <returns>S_OK if a clone was returned; otherwise, E_OUTOFMEMORY.</returns>
   STDMETHOD(Clone)(_Deref_out_opt_ IEnumSetupInstances **ppenum) = 0;
 };
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IEnumSetupInstances, 0x6380bcff, 0x41d3, 0x4b2e, 0x8b, 0x2e,
+                0xbf, 0x8a, 0x68, 0x10, 0xc8, 0x48)
+#endif
 #endif
 
 EXTERN_C const IID IID_ISetupConfiguration;
@@ -364,6 +379,11 @@ struct DECLSPEC_UUID("42843719-DB4C-46C2-8E7C-64F1816EFD5B")
   STDMETHOD(GetInstanceForPath)
   (_In_z_ LPCWSTR wzPath, _Out_ ISetupInstance **ppInstance) = 0;
 };
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(ISetupConfiguration, 0x42843719, 0xdb4c, 0x46c2, 0x8e, 0x7c,
+                0x64, 0xf1, 0x81, 0x6e, 0xfd, 0x5b)
+#endif
 #endif
 
 EXTERN_C const IID IID_ISetupConfiguration2;
@@ -382,6 +402,11 @@ struct DECLSPEC_UUID("26AAB78C-4A60-49D6-AF3B-3C35BC93365D")
   /// <returns>Standard HRESULT indicating success or failure.</returns>
   STDMETHOD(EnumAllInstances)(_Out_ IEnumSetupInstances **ppEnumInstances) = 0;
 };
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(ISetupConfiguration2, 0x26aab78c, 0x4a60, 0x49d6, 0xaf, 0x3b,
+                0x3c, 0x35, 0xbc, 0x93, 0x36, 0x5d)
+#endif
 #endif
 
 EXTERN_C const IID IID_ISetupPackageReference;
@@ -486,6 +511,11 @@ struct DECLSPEC_UUID("42b21b78-6192-463e-87bf-d577838f1d5c")
   (_In_ LPCOLESTR pwszVersionRange, _Out_ PULONGLONG pullMinVersion,
    _Out_ PULONGLONG pullMaxVersion) = 0;
 };
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(ISetupHelper, 0x42b21b78, 0x6192, 0x463e, 0x87, 0xbf, 0xd5,
+                0x77, 0x83, 0x8f, 0x1d, 0x5c)
+#endif
 #endif
 
 // Class declarations
@@ -498,6 +528,11 @@ EXTERN_C const CLSID CLSID_SetupConfiguration;
 /// cref="ISetupConfiguration2"/>, and <see cref="ISetupHelper"/>.
 /// </summary>
 class DECLSPEC_UUID("177F0C4A-1CD3-4DE7-A32C-71DBBB9FA36D") SetupConfiguration;
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(SetupConfiguration, 0x177f0c4a, 0x1cd3, 0x4de7, 0xa3, 0x2c,
+                0x71, 0xdb, 0xbb, 0x9f, 0xa3, 0x6d)
+#endif
 #endif
 
 // Function declarations
