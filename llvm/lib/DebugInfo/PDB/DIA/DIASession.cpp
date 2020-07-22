@@ -27,10 +27,6 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 
-#ifdef __MINGW32__
-#define _MSC_VER 1900
-#endif
-
 using namespace llvm;
 using namespace llvm::pdb;
 
@@ -66,34 +62,33 @@ static Error ErrorFromHResult(HRESULT Result, const char *Str, Ts &&... Args) {
   }
 }
 
-static Error LoadDIA(ComPtr<IDiaDataSource> &DiaDataSource) {
-  if (SUCCEEDED(CoCreateInstance(
-          __uuidof(DiaSource), nullptr, CLSCTX_INPROC_SERVER,
-          __uuidof(IDiaDataSource),
-          reinterpret_cast<LPVOID *>(DiaDataSource.GetAddressOf()))))
+static Error LoadDIA(IDiaDataSourcePtr &DiaDataSource) {
+  if (SUCCEEDED(CoCreateInstance(__uuidof(DiaSource), nullptr,
+                                 CLSCTX_INPROC_SERVER, __uuidof(IDiaDataSource),
+                                 reinterpret_cast<LPVOID *>(&DiaDataSource))))
     return Error::success();
 
 // If the CoCreateInstance call above failed, msdia*.dll is not registered.
 // Try loading the DLL corresponding to the #included DIA SDK.
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
   return llvm::make_error<PDBError>(pdb_error_code::dia_failed_loading);
 #else
   const wchar_t *msdia_dll = L"msdia140.dll";
   HRESULT HR;
-  if (FAILED(HR = NoRegCoCreate(
-                 msdia_dll, __uuidof(DiaSource), __uuidof(IDiaDataSource),
-                 reinterpret_cast<LPVOID *>(DiaDataSource.GetAddressOf()))))
+  if (FAILED(HR = NoRegCoCreate(msdia_dll, __uuidof(DiaSource),
+                                __uuidof(IDiaDataSource),
+                                reinterpret_cast<LPVOID *>(&DiaDataSource))))
     return ErrorFromHResult(HR, "Calling NoRegCoCreate");
   return Error::success();
 #endif
 }
 
-DIASession::DIASession(ComPtr<IDiaSession> DiaSession) : Session(DiaSession) {}
+DIASession::DIASession(IDiaSessionPtr DiaSession) : Session(DiaSession) {}
 
 Error DIASession::createFromPdb(StringRef Path,
                                 std::unique_ptr<IPDBSession> &Session) {
-  ComPtr<IDiaDataSource> DiaDataSource;
-  ComPtr<IDiaSession> DiaSession;
+  IDiaDataSourcePtr DiaDataSource;
+  IDiaSessionPtr DiaSession;
 
   // We assume that CoInitializeEx has already been called by the executable.
   if (auto E = LoadDIA(DiaDataSource))
@@ -109,7 +104,7 @@ Error DIASession::createFromPdb(StringRef Path,
     return ErrorFromHResult(HR, "Calling loadDataFromPdb {0}", Path);
   }
 
-  if (FAILED(HR = DiaDataSource->openSession(DiaSession.GetAddressOf())))
+  if (FAILED(HR = DiaDataSource->openSession(&DiaSession)))
     return ErrorFromHResult(HR, "Calling openSession");
 
   Session.reset(new DIASession(DiaSession));
@@ -118,8 +113,8 @@ Error DIASession::createFromPdb(StringRef Path,
 
 Error DIASession::createFromExe(StringRef Path,
                                 std::unique_ptr<IPDBSession> &Session) {
-  ComPtr<IDiaDataSource> DiaDataSource;
-  ComPtr<IDiaSession> DiaSession;
+  IDiaDataSourcePtr DiaDataSource;
+  IDiaSessionPtr DiaSession;
 
   // We assume that CoInitializeEx has already been called by the executable.
   if (auto EC = LoadDIA(DiaDataSource))
@@ -134,7 +129,7 @@ Error DIASession::createFromExe(StringRef Path,
   if (FAILED(HR = DiaDataSource->loadDataForExe(Path16Str, nullptr, nullptr)))
     return ErrorFromHResult(HR, "Calling loadDataForExe");
 
-  if (FAILED(HR = DiaDataSource->openSession(DiaSession.GetAddressOf())))
+  if (FAILED(HR = DiaDataSource->openSession(&DiaSession)))
     return ErrorFromHResult(HR, "Calling openSession");
 
   Session.reset(new DIASession(DiaSession));
@@ -152,8 +147,8 @@ bool DIASession::setLoadAddress(uint64_t Address) {
 }
 
 std::unique_ptr<PDBSymbolExe> DIASession::getGlobalScope() {
-  ComPtr<IDiaSymbol> GlobalScope;
-  if (S_OK != Session->get_globalScope(GlobalScope.GetAddressOf()))
+  IDiaSymbolPtr GlobalScope;
+  if (S_OK != Session->get_globalScope(&GlobalScope))
     return nullptr;
 
   auto RawSymbol = std::make_unique<DIARawSymbol>(*this, GlobalScope);
@@ -187,8 +182,8 @@ bool DIASession::addressForRVA(uint32_t RVA, uint32_t &Section,
 
 std::unique_ptr<PDBSymbol>
 DIASession::getSymbolById(SymIndexId SymbolId) const {
-  ComPtr<IDiaSymbol> LocatedSymbol;
-  if (S_OK != Session->symbolById(SymbolId, LocatedSymbol.GetAddressOf()))
+  IDiaSymbolPtr LocatedSymbol;
+  if (S_OK != Session->symbolById(SymbolId, &LocatedSymbol))
     return nullptr;
 
   auto RawSymbol = std::make_unique<DIARawSymbol>(*this, LocatedSymbol);
@@ -199,14 +194,13 @@ std::unique_ptr<PDBSymbol> DIASession::findSymbolByAddress(uint64_t Address,
                                                            PDB_SymType Type) {
   enum SymTagEnum EnumVal = static_cast<enum SymTagEnum>(Type);
 
-  ComPtr<IDiaSymbol> Symbol;
-  if (S_OK !=
-      Session->findSymbolByVA(Address, EnumVal, Symbol.GetAddressOf())) {
+  IDiaSymbolPtr Symbol;
+  if (S_OK != Session->findSymbolByVA(Address, EnumVal, &Symbol)) {
     ULONGLONG LoadAddr = 0;
     if (S_OK != Session->get_loadAddress(&LoadAddr))
       return nullptr;
     DWORD RVA = static_cast<DWORD>(Address - LoadAddr);
-    if (S_OK != Session->findSymbolByRVA(RVA, EnumVal, Symbol.GetAddressOf()))
+    if (S_OK != Session->findSymbolByRVA(RVA, EnumVal, &Symbol))
       return nullptr;
   }
   auto RawSymbol = std::make_unique<DIARawSymbol>(*this, Symbol);
@@ -217,8 +211,8 @@ std::unique_ptr<PDBSymbol> DIASession::findSymbolByRVA(uint32_t RVA,
                                                        PDB_SymType Type) {
   enum SymTagEnum EnumVal = static_cast<enum SymTagEnum>(Type);
 
-  ComPtr<IDiaSymbol> Symbol;
-  if (S_OK != Session->findSymbolByRVA(RVA, EnumVal, Symbol.GetAddressOf()))
+  IDiaSymbolPtr Symbol;
+  if (S_OK != Session->findSymbolByRVA(RVA, EnumVal, &Symbol))
     return nullptr;
 
   auto RawSymbol = std::make_unique<DIARawSymbol>(*this, Symbol);
@@ -230,9 +224,8 @@ DIASession::findSymbolBySectOffset(uint32_t Sect, uint32_t Offset,
                                    PDB_SymType Type) {
   enum SymTagEnum EnumVal = static_cast<enum SymTagEnum>(Type);
 
-  ComPtr<IDiaSymbol> Symbol;
-  if (S_OK !=
-      Session->findSymbolByAddr(Sect, Offset, EnumVal, Symbol.GetAddressOf()))
+  IDiaSymbolPtr Symbol;
+  if (S_OK != Session->findSymbolByAddr(Sect, Offset, EnumVal, &Symbol))
     return nullptr;
 
   auto RawSymbol = std::make_unique<DIARawSymbol>(*this, Symbol);
@@ -246,9 +239,9 @@ DIASession::findLineNumbers(const PDBSymbolCompiland &Compiland,
       static_cast<const DIARawSymbol &>(Compiland.getRawSymbol());
   const DIASourceFile &RawFile = static_cast<const DIASourceFile &>(File);
 
-  ComPtr<IDiaEnumLineNumbers> LineNumbers;
-  if (S_OK != Session->findLines(RawCompiland.getDiaSymbol().Get(),
-                                 RawFile.getDiaFile().Get(), &LineNumbers))
+  IDiaEnumLineNumbersPtr LineNumbers;
+  if (S_OK != Session->findLines(RawCompiland.getDiaSymbol(),
+                                 RawFile.getDiaFile(), &LineNumbers))
     return nullptr;
 
   return std::make_unique<DIAEnumLineNumbers>(LineNumbers);
@@ -256,15 +249,13 @@ DIASession::findLineNumbers(const PDBSymbolCompiland &Compiland,
 
 std::unique_ptr<IPDBEnumLineNumbers>
 DIASession::findLineNumbersByAddress(uint64_t Address, uint32_t Length) const {
-  ComPtr<IDiaEnumLineNumbers> LineNumbers;
-  if (S_OK !=
-      Session->findLinesByVA(Address, Length, LineNumbers.GetAddressOf())) {
+  IDiaEnumLineNumbersPtr LineNumbers;
+  if (S_OK != Session->findLinesByVA(Address, Length, &LineNumbers)) {
     ULONGLONG LoadAddr = 0;
     if (S_OK != Session->get_loadAddress(&LoadAddr))
       return nullptr;
     DWORD RVA = static_cast<DWORD>(Address - LoadAddr);
-    if (S_OK !=
-        Session->findLinesByRVA(RVA, Length, LineNumbers.GetAddressOf()))
+    if (S_OK != Session->findLinesByRVA(RVA, Length, &LineNumbers))
       return nullptr;
   }
   return std::make_unique<DIAEnumLineNumbers>(LineNumbers);
@@ -272,8 +263,8 @@ DIASession::findLineNumbersByAddress(uint64_t Address, uint32_t Length) const {
 
 std::unique_ptr<IPDBEnumLineNumbers>
 DIASession::findLineNumbersByRVA(uint32_t RVA, uint32_t Length) const {
-  ComPtr<IDiaEnumLineNumbers> LineNumbers;
-  if (S_OK != Session->findLinesByRVA(RVA, Length, LineNumbers.GetAddressOf()))
+  IDiaEnumLineNumbersPtr LineNumbers;
+  if (S_OK != Session->findLinesByRVA(RVA, Length, &LineNumbers))
     return nullptr;
 
   return std::make_unique<DIAEnumLineNumbers>(LineNumbers);
@@ -282,9 +273,8 @@ DIASession::findLineNumbersByRVA(uint32_t RVA, uint32_t Length) const {
 std::unique_ptr<IPDBEnumLineNumbers>
 DIASession::findLineNumbersBySectOffset(uint32_t Section, uint32_t Offset,
                                         uint32_t Length) const {
-  ComPtr<IDiaEnumLineNumbers> LineNumbers;
-  if (S_OK != Session->findLinesByAddr(Section, Offset, Length,
-                                       LineNumbers.GetAddressOf()))
+  IDiaEnumLineNumbersPtr LineNumbers;
+  if (S_OK != Session->findLinesByAddr(Section, Offset, Length, &LineNumbers))
     return nullptr;
 
   return std::make_unique<DIAEnumLineNumbers>(LineNumbers);
@@ -301,14 +291,13 @@ DIASession::findSourceFiles(const PDBSymbolCompiland *Compiland,
 
   if (Compiland)
     DiaCompiland = static_cast<const DIARawSymbol &>(Compiland->getRawSymbol())
-                       .getDiaSymbol()
-                       .Get();
+                       .getDiaSymbol();
 
   Flags = static_cast<PDB_NameSearchFlags>(
       Flags | PDB_NameSearchFlags::NS_FileNameExtMatch);
-  ComPtr<IDiaEnumSourceFiles> SourceFiles;
+  IDiaEnumSourceFilesPtr SourceFiles;
   if (S_OK != Session->findFile(DiaCompiland, Utf16Pattern.GetBSTR(), Flags,
-                                SourceFiles.GetAddressOf()))
+                                &SourceFiles))
     return nullptr;
   return std::make_unique<DIAEnumSourceFiles>(*this, SourceFiles);
 }
@@ -342,8 +331,8 @@ DIASession::findOneCompilandForSourceFile(llvm::StringRef Pattern,
 }
 
 std::unique_ptr<IPDBEnumSourceFiles> DIASession::getAllSourceFiles() const {
-  ComPtr<IDiaEnumSourceFiles> Files;
-  if (S_OK != Session->findFile(nullptr, nullptr, nsNone, Files.GetAddressOf()))
+  IDiaEnumSourceFilesPtr Files;
+  if (S_OK != Session->findFile(nullptr, nullptr, nsNone, &Files))
     return nullptr;
 
   return std::make_unique<DIAEnumSourceFiles>(*this, Files);
@@ -351,12 +340,12 @@ std::unique_ptr<IPDBEnumSourceFiles> DIASession::getAllSourceFiles() const {
 
 std::unique_ptr<IPDBEnumSourceFiles> DIASession::getSourceFilesForCompiland(
     const PDBSymbolCompiland &Compiland) const {
-  ComPtr<IDiaEnumSourceFiles> Files;
+  IDiaEnumSourceFilesPtr Files;
 
   const DIARawSymbol &RawSymbol =
       static_cast<const DIARawSymbol &>(Compiland.getRawSymbol());
-  if (S_OK != Session->findFile(RawSymbol.getDiaSymbol().Get(), nullptr, nsNone,
-                                Files.GetAddressOf()))
+  if (S_OK !=
+      Session->findFile(RawSymbol.getDiaSymbol(), nullptr, nsNone, &Files))
     return nullptr;
 
   return std::make_unique<DIAEnumSourceFiles>(*this, Files);
@@ -364,52 +353,52 @@ std::unique_ptr<IPDBEnumSourceFiles> DIASession::getSourceFilesForCompiland(
 
 std::unique_ptr<IPDBSourceFile>
 DIASession::getSourceFileById(uint32_t FileId) const {
-  ComPtr<IDiaSourceFile> LocatedFile;
-  if (S_OK != Session->findFileById(FileId, LocatedFile.GetAddressOf()))
+  IDiaSourceFilePtr LocatedFile;
+  if (S_OK != Session->findFileById(FileId, &LocatedFile))
     return nullptr;
 
   return std::make_unique<DIASourceFile>(*this, LocatedFile);
 }
 
 std::unique_ptr<IPDBEnumDataStreams> DIASession::getDebugStreams() const {
-  ComPtr<IDiaEnumDebugStreams> DiaEnumerator;
-  if (S_OK != Session->getEnumDebugStreams(DiaEnumerator.GetAddressOf()))
+  IDiaEnumDebugStreamsPtr DiaEnumerator;
+  if (S_OK != Session->getEnumDebugStreams(&DiaEnumerator))
     return nullptr;
 
   return std::make_unique<DIAEnumDebugStreams>(DiaEnumerator);
 }
 
 std::unique_ptr<IPDBEnumTables> DIASession::getEnumTables() const {
-  ComPtr<IDiaEnumTables> DiaEnumerator;
-  if (S_OK != Session->getEnumTables(DiaEnumerator.GetAddressOf()))
+  IDiaEnumTablesPtr DiaEnumerator;
+  if (S_OK != Session->getEnumTables(&DiaEnumerator))
     return nullptr;
 
   return std::make_unique<DIAEnumTables>(DiaEnumerator);
 }
 
-template <class T> static ComPtr<T> getTableEnumerator(IDiaSession &Session) {
-  ComPtr<T> Enumerator;
-  ComPtr<IDiaEnumTables> ET;
-  ComPtr<IDiaTable> Table;
+template <class T, class I> static T getTableEnumerator(IDiaSession &Session) {
+  T Enumerator;
+  IDiaEnumTablesPtr ET;
+  IDiaTablePtr Table;
   ULONG Count = 0;
 
-  if (Session.getEnumTables(ET.GetAddressOf()) != S_OK)
-    return nullptr;
+  if (Session.getEnumTables(&ET) != S_OK)
+    return Enumerator;
 
-  while (ET->Next(1, Table.GetAddressOf(), &Count) == S_OK && Count == 1) {
+  while (ET->Next(1, &Table, &Count) == S_OK && Count == 1) {
     // There is only one table that matches the given iid
-    if (S_OK ==
-        Table->QueryInterface(
-            __uuidof(T), reinterpret_cast<void **>(Enumerator.GetAddressOf())))
+    if (S_OK == Table->QueryInterface(__uuidof(I),
+                                      reinterpret_cast<void **>(&Enumerator)))
       break;
-    Table.Reset();
+    Table.Release();
   }
   return Enumerator;
 }
 std::unique_ptr<IPDBEnumInjectedSources>
 DIASession::getInjectedSources() const {
-  ComPtr<IDiaEnumInjectedSources> Files =
-      getTableEnumerator<IDiaEnumInjectedSources>(*Session.Get());
+  IDiaEnumInjectedSourcesPtr Files =
+      getTableEnumerator<IDiaEnumInjectedSourcesPtr, IDiaEnumInjectedSources>(
+          *Session);
   if (!Files)
     return nullptr;
 
@@ -418,8 +407,9 @@ DIASession::getInjectedSources() const {
 
 std::unique_ptr<IPDBEnumSectionContribs>
 DIASession::getSectionContribs() const {
-  ComPtr<IDiaEnumSectionContribs> Sections =
-      getTableEnumerator<IDiaEnumSectionContribs>(*Session.Get());
+  IDiaEnumSectionContribsPtr Sections =
+      getTableEnumerator<IDiaEnumSectionContribsPtr, IDiaEnumSectionContribs>(
+          *Session);
   if (!Sections)
     return nullptr;
 
@@ -427,8 +417,8 @@ DIASession::getSectionContribs() const {
 }
 
 std::unique_ptr<IPDBEnumFrameData> DIASession::getFrameData() const {
-  ComPtr<IDiaEnumFrameData> FD =
-      getTableEnumerator<IDiaEnumFrameData>(*Session.Get());
+  IDiaEnumFrameDataPtr FD =
+      getTableEnumerator<IDiaEnumFrameDataPtr, IDiaEnumFrameData>(*Session);
   if (!FD)
     return nullptr;
 
