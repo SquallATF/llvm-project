@@ -15,7 +15,7 @@
 using namespace llvm;
 using namespace llvm::pdb;
 
-DIAInjectedSource::DIAInjectedSource(ComPtr<IDiaInjectedSource> DiaSourceFile)
+DIAInjectedSource::DIAInjectedSource(IDiaInjectedSourcePtr DiaSourceFile)
     : SourceFile(DiaSourceFile) {}
 
 uint32_t DIAInjectedSource::getCrc32() const {
@@ -29,16 +29,15 @@ uint64_t DIAInjectedSource::getCodeByteSize() const {
 }
 
 std::string DIAInjectedSource::getFileName() const {
-  return invokeBstrMethod(*SourceFile.Get(), &IDiaInjectedSource::get_filename);
+  return invokeBstrMethod(*SourceFile, &IDiaInjectedSource::get_filename);
 }
 
 std::string DIAInjectedSource::getObjectFileName() const {
-  return invokeBstrMethod(*SourceFile.Get(),
-                          &IDiaInjectedSource::get_objectFilename);
+  return invokeBstrMethod(*SourceFile, &IDiaInjectedSource::get_objectFilename);
 }
 
 std::string DIAInjectedSource::getVirtualFileName() const {
-  return invokeBstrMethod(*SourceFile.Get(),
+  return invokeBstrMethod(*SourceFile,
                           &IDiaInjectedSource::get_virtualFilename);
 }
 

@@ -19,7 +19,7 @@ class DIASession;
 class DIASourceFile : public IPDBSourceFile {
 public:
   explicit DIASourceFile(const DIASession &Session,
-                         ComPtr<IDiaSourceFile> DiaSourceFile);
+                         IDiaSourceFilePtr DiaSourceFile);
 
   std::string getFileName() const override;
   uint32_t getUniqueId() const override;
@@ -28,11 +28,11 @@ public:
   std::unique_ptr<IPDBEnumChildren<PDBSymbolCompiland>>
   getCompilands() const override;
 
-  ComPtr<IDiaSourceFile> getDiaFile() const { return SourceFile; }
+  IDiaSourceFilePtr getDiaFile() const { return SourceFile; }
 
 private:
   const DIASession &Session;
-  ComPtr<IDiaSourceFile> SourceFile;
+  IDiaSourceFilePtr SourceFile;
 };
 } // namespace pdb
 } // namespace llvm

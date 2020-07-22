@@ -12,14 +12,14 @@
 
 using namespace llvm::pdb;
 
-DIAFrameData::DIAFrameData(ComPtr<IDiaFrameData> DiaFrameData)
+DIAFrameData::DIAFrameData(IDiaFrameDataPtr DiaFrameData)
     : FrameData(DiaFrameData) {}
 template <typename ArgType>
 ArgType
-PrivateGetDIAValue(const ComPtr<IDiaFrameData> &FrameData,
+PrivateGetDIAValue(IDiaFrameData *FrameData,
                    HRESULT (__stdcall IDiaFrameData::*Method)(ArgType *)) {
   ArgType Value;
-  if (S_OK == (FrameData.Get()->*Method)(&Value))
+  if (S_OK == (FrameData->*Method)(&Value))
     return static_cast<ArgType>(Value);
 
   return ArgType();
@@ -38,7 +38,7 @@ uint32_t DIAFrameData::getLengthBlock() const {
 }
 
 std::string DIAFrameData::getProgram() const {
-  return invokeBstrMethod(*FrameData.Get(), &IDiaFrameData::get_program);
+  return invokeBstrMethod(*FrameData, &IDiaFrameData::get_program);
 }
 
 uint32_t DIAFrameData::getRelativeVirtualAddress() const {

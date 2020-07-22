@@ -19,7 +19,7 @@ namespace pdb {
 class DIAEnumInjectedSources : public IPDBEnumChildren<IPDBInjectedSource> {
 public:
   explicit DIAEnumInjectedSources(
-      ComPtr<IDiaEnumInjectedSources> DiaEnumerator);
+      IDiaEnumInjectedSourcesPtr DiaEnumerator);
 
   uint32_t getChildCount() const override;
   ChildTypePtr getChildAtIndex(uint32_t Index) const override;
@@ -27,7 +27,7 @@ public:
   void reset() override;
 
 private:
-  ComPtr<IDiaEnumInjectedSources> Enumerator;
+  IDiaEnumInjectedSourcesPtr Enumerator;
 };
 } // namespace pdb
 } // namespace llvm
