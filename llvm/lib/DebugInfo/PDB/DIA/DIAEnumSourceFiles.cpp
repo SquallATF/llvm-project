@@ -14,7 +14,7 @@ using namespace llvm;
 using namespace llvm::pdb;
 
 DIAEnumSourceFiles::DIAEnumSourceFiles(
-    const DIASession &PDBSession, ComPtr<IDiaEnumSourceFiles> DiaEnumerator)
+    const DIASession &PDBSession, IDiaEnumSourceFilesPtr DiaEnumerator)
     : Session(PDBSession), Enumerator(DiaEnumerator) {}
 
 uint32_t DIAEnumSourceFiles::getChildCount() const {
@@ -24,17 +24,17 @@ uint32_t DIAEnumSourceFiles::getChildCount() const {
 
 std::unique_ptr<IPDBSourceFile>
 DIAEnumSourceFiles::getChildAtIndex(uint32_t Index) const {
-  ComPtr<IDiaSourceFile> Item;
-  if (S_OK != Enumerator->Item(Index, Item.GetAddressOf()))
+  IDiaSourceFilePtr Item;
+  if (S_OK != Enumerator->Item(Index, &Item))
     return nullptr;
 
   return std::unique_ptr<IPDBSourceFile>(new DIASourceFile(Session, Item));
 }
 
 std::unique_ptr<IPDBSourceFile> DIAEnumSourceFiles::getNext() {
-  ComPtr<IDiaSourceFile> Item;
+  IDiaSourceFilePtr Item;
   ULONG NumFetched = 0;
-  if (S_OK != Enumerator->Next(1, Item.GetAddressOf(), &NumFetched))
+  if (S_OK != Enumerator->Next(1, &Item, &NumFetched))
     return nullptr;
 
   return std::unique_ptr<IPDBSourceFile>(new DIASourceFile(Session, Item));

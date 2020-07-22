@@ -27,11 +27,9 @@
 #define NOMINMAX
 #endif
 
-#include <windows.h>
-#include <wrl/client.h>
-using Microsoft::WRL::ComPtr;
 #include <cstdio>
-#include <comutil.h>
+#include <comdef.h>
+#include <windows.h>
 
 // DIA headers must come after windows headers.
 #include <cvconst.h>
@@ -44,5 +42,27 @@ using Microsoft::WRL::ComPtr;
 #pragma clang diagnostic pop
 #endif
 #include <diacreate.h>
+
+_COM_SMARTPTR_TYPEDEF(IDiaTable, __uuidof(IDiaTable));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumDebugStreamData,
+                      __uuidof(IDiaEnumDebugStreamData));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumDebugStreams, __uuidof(IDiaEnumDebugStreams));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumFrameData, __uuidof(IDiaEnumFrameData));
+_COM_SMARTPTR_TYPEDEF(IDiaFrameData, __uuidof(IDiaFrameData));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumInjectedSources,
+                      __uuidof(IDiaEnumInjectedSources));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumLineNumbers, __uuidof(IDiaEnumLineNumbers));
+_COM_SMARTPTR_TYPEDEF(IDiaLineNumber, __uuidof(IDiaLineNumber));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumSectionContribs,
+                      __uuidof(IDiaEnumSectionContribs));
+_COM_SMARTPTR_TYPEDEF(IDiaSectionContrib, __uuidof(IDiaSectionContrib));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumSourceFiles, __uuidof(IDiaEnumSourceFiles));
+_COM_SMARTPTR_TYPEDEF(IDiaSourceFile, __uuidof(IDiaSourceFile));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumSymbols, __uuidof(IDiaEnumSymbols));
+_COM_SMARTPTR_TYPEDEF(IDiaSymbol, __uuidof(IDiaSymbol));
+_COM_SMARTPTR_TYPEDEF(IDiaEnumTables, __uuidof(IDiaEnumTables));
+_COM_SMARTPTR_TYPEDEF(IDiaInjectedSource, __uuidof(IDiaInjectedSource));
+_COM_SMARTPTR_TYPEDEF(IDiaSession, __uuidof(IDiaSession));
+_COM_SMARTPTR_TYPEDEF(IDiaDataSource, __uuidof(IDiaDataSource));
 
 #endif // LLVM_DEBUGINFO_PDB_DIA_DIASUPPORT_H

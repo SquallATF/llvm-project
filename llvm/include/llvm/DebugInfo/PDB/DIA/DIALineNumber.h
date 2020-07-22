@@ -16,7 +16,7 @@ namespace llvm {
 namespace pdb {
 class DIALineNumber : public IPDBLineNumber {
 public:
-  explicit DIALineNumber(ComPtr<IDiaLineNumber> DiaLineNumber);
+  explicit DIALineNumber(IDiaLineNumberPtr DiaLineNumber);
 
   uint32_t getLineNumber() const override;
   uint32_t getLineNumberEnd() const override;
@@ -32,7 +32,7 @@ public:
   bool isStatement() const override;
 
 private:
-  ComPtr<IDiaLineNumber> LineNumber;
+  IDiaLineNumberPtr LineNumber;
 };
 } // namespace pdb
 } // namespace llvm

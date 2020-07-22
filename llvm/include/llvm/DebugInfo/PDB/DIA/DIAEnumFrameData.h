@@ -18,7 +18,7 @@ namespace pdb {
 
 class DIAEnumFrameData : public IPDBEnumChildren<IPDBFrameData> {
 public:
-  explicit DIAEnumFrameData(ComPtr<IDiaEnumFrameData> DiaEnumerator);
+  explicit DIAEnumFrameData(IDiaEnumFrameDataPtr DiaEnumerator);
 
   uint32_t getChildCount() const override;
   ChildTypePtr getChildAtIndex(uint32_t Index) const override;
@@ -26,7 +26,7 @@ public:
   void reset() override;
 
 private:
-  ComPtr<IDiaEnumFrameData> Enumerator;
+  IDiaEnumFrameDataPtr Enumerator;
 };
 
 } // namespace pdb
