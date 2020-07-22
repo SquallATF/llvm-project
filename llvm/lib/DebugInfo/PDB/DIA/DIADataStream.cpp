@@ -12,7 +12,7 @@
 using namespace llvm;
 using namespace llvm::pdb;
 
-DIADataStream::DIADataStream(ComPtr<IDiaEnumDebugStreamData> DiaStreamData)
+DIADataStream::DIADataStream(IDiaEnumDebugStreamDataPtr DiaStreamData)
     : StreamData(DiaStreamData) {}
 
 uint32_t DIADataStream::getRecordCount() const {
@@ -21,8 +21,7 @@ uint32_t DIADataStream::getRecordCount() const {
 }
 
 std::string DIADataStream::getName() const {
-  return invokeBstrMethod(*StreamData.Get(),
-                          &IDiaEnumDebugStreamData::get_name);
+  return invokeBstrMethod(*StreamData, &IDiaEnumDebugStreamData::get_name);
 }
 
 llvm::Optional<DIADataStream::RecordType>

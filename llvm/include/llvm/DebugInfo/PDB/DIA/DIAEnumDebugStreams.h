@@ -20,7 +20,7 @@ class IPDBDataStream;
 
 class DIAEnumDebugStreams : public IPDBEnumChildren<IPDBDataStream> {
 public:
-  explicit DIAEnumDebugStreams(ComPtr<IDiaEnumDebugStreams> DiaEnumerator);
+  explicit DIAEnumDebugStreams(IDiaEnumDebugStreamsPtr DiaEnumerator);
 
   uint32_t getChildCount() const override;
   ChildTypePtr getChildAtIndex(uint32_t Index) const override;
@@ -28,7 +28,7 @@ public:
   void reset() override;
 
 private:
-  ComPtr<IDiaEnumDebugStreams> Enumerator;
+  IDiaEnumDebugStreamsPtr Enumerator;
 };
 }
 }

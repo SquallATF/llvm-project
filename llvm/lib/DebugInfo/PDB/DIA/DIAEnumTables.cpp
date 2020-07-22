@@ -12,7 +12,7 @@
 using namespace llvm;
 using namespace llvm::pdb;
 
-DIAEnumTables::DIAEnumTables(ComPtr<IDiaEnumTables> DiaEnumerator)
+DIAEnumTables::DIAEnumTables(IDiaEnumTablesPtr DiaEnumerator)
     : Enumerator(DiaEnumerator) {}
 
 uint32_t DIAEnumTables::getChildCount() const {
@@ -22,20 +22,20 @@ uint32_t DIAEnumTables::getChildCount() const {
 
 std::unique_ptr<IPDBTable>
 DIAEnumTables::getChildAtIndex(uint32_t Index) const {
-  ComPtr<IDiaTable> Item;
+  IDiaTablePtr Item;
   VARIANT Var;
   Var.vt = VT_UINT;
   Var.uintVal = Index;
-  if (S_OK != Enumerator->Item(Var, Item.GetAddressOf()))
+  if (S_OK != Enumerator->Item(Var, &Item))
     return nullptr;
 
   return std::unique_ptr<IPDBTable>(new DIATable(Item));
 }
 
 std::unique_ptr<IPDBTable> DIAEnumTables::getNext() {
-  ComPtr<IDiaTable> Item;
+  IDiaTablePtr Item;
   ULONG CeltFetched = 0;
-  if (S_OK != Enumerator->Next(1, Item.GetAddressOf(), &CeltFetched))
+  if (S_OK != Enumerator->Next(1, &Item, &CeltFetched))
     return nullptr;
 
   return std::unique_ptr<IPDBTable>(new DIATable(Item));
