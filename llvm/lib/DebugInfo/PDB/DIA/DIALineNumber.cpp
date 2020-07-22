@@ -11,7 +11,7 @@
 using namespace llvm;
 using namespace llvm::pdb;
 
-DIALineNumber::DIALineNumber(ComPtr<IDiaLineNumber> DiaLineNumber)
+DIALineNumber::DIALineNumber(IDiaLineNumberPtr DiaLineNumber)
     : LineNumber(DiaLineNumber) {}
 
 uint32_t DIALineNumber::getLineNumber() const {

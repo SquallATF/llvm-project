@@ -14,7 +14,7 @@ using namespace llvm;
 using namespace llvm::pdb;
 
 DIAEnumInjectedSources::DIAEnumInjectedSources(
-    ComPtr<IDiaEnumInjectedSources> DiaEnumerator)
+    IDiaEnumInjectedSourcesPtr DiaEnumerator)
     : Enumerator(DiaEnumerator) {}
 
 uint32_t DIAEnumInjectedSources::getChildCount() const {
@@ -24,17 +24,17 @@ uint32_t DIAEnumInjectedSources::getChildCount() const {
 
 std::unique_ptr<IPDBInjectedSource>
 DIAEnumInjectedSources::getChildAtIndex(uint32_t Index) const {
-  ComPtr<IDiaInjectedSource> Item;
-  if (S_OK != Enumerator->Item(Index, Item.GetAddressOf()))
+  IDiaInjectedSourcePtr Item;
+  if (S_OK != Enumerator->Item(Index, &Item))
     return nullptr;
 
   return std::unique_ptr<IPDBInjectedSource>(new DIAInjectedSource(Item));
 }
 
 std::unique_ptr<IPDBInjectedSource> DIAEnumInjectedSources::getNext() {
-  ComPtr<IDiaInjectedSource> Item;
+  IDiaInjectedSourcePtr Item;
   ULONG NumFetched = 0;
-  if (S_OK != Enumerator->Next(1, Item.GetAddressOf(), &NumFetched))
+  if (S_OK != Enumerator->Next(1, &Item, &NumFetched))
     return nullptr;
 
   return std::unique_ptr<IPDBInjectedSource>(new DIAInjectedSource(Item));
