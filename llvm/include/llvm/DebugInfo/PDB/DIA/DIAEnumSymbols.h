@@ -20,7 +20,7 @@ class DIASession;
 class DIAEnumSymbols : public IPDBEnumChildren<PDBSymbol> {
 public:
   explicit DIAEnumSymbols(const DIASession &Session,
-                          ComPtr<IDiaEnumSymbols> DiaEnumerator);
+                          IDiaEnumSymbolsPtr DiaEnumerator);
 
   uint32_t getChildCount() const override;
   std::unique_ptr<PDBSymbol> getChildAtIndex(uint32_t Index) const override;
@@ -29,7 +29,7 @@ public:
 
 private:
   const DIASession &Session;
-  ComPtr<IDiaEnumSymbols> Enumerator;
+  IDiaEnumSymbolsPtr Enumerator;
 };
 } // namespace pdb
 } // namespace llvm

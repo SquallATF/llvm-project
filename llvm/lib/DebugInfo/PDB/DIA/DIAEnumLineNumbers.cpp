@@ -14,7 +14,7 @@ using namespace llvm;
 using namespace llvm::pdb;
 
 DIAEnumLineNumbers::DIAEnumLineNumbers(
-    ComPtr<IDiaEnumLineNumbers> DiaEnumerator)
+    IDiaEnumLineNumbersPtr DiaEnumerator)
     : Enumerator(DiaEnumerator) {}
 
 uint32_t DIAEnumLineNumbers::getChildCount() const {
@@ -24,17 +24,17 @@ uint32_t DIAEnumLineNumbers::getChildCount() const {
 
 std::unique_ptr<IPDBLineNumber>
 DIAEnumLineNumbers::getChildAtIndex(uint32_t Index) const {
-  ComPtr<IDiaLineNumber> Item;
-  if (S_OK != Enumerator->Item(Index, Item.GetAddressOf()))
+  IDiaLineNumberPtr Item;
+  if (S_OK != Enumerator->Item(Index, &Item))
     return nullptr;
 
   return std::unique_ptr<IPDBLineNumber>(new DIALineNumber(Item));
 }
 
 std::unique_ptr<IPDBLineNumber> DIAEnumLineNumbers::getNext() {
-  ComPtr<IDiaLineNumber> Item;
+  IDiaLineNumberPtr Item;
   ULONG NumFetched = 0;
-  if (S_OK != Enumerator->Next(1, Item.GetAddressOf(), &NumFetched))
+  if (S_OK != Enumerator->Next(1, &Item, &NumFetched))
     return nullptr;
 
   return std::unique_ptr<IPDBLineNumber>(new DIALineNumber(Item));
