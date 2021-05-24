@@ -14,7 +14,7 @@ using namespace llvm;
 using namespace llvm::pdb;
 
 DIAEnumDebugStreams::DIAEnumDebugStreams(
-    CComPtr<IDiaEnumDebugStreams> DiaEnumerator)
+    ComPtr<IDiaEnumDebugStreams> DiaEnumerator)
     : Enumerator(DiaEnumerator) {}
 
 uint32_t DIAEnumDebugStreams::getChildCount() const {
@@ -24,20 +24,20 @@ uint32_t DIAEnumDebugStreams::getChildCount() const {
 
 std::unique_ptr<IPDBDataStream>
 DIAEnumDebugStreams::getChildAtIndex(uint32_t Index) const {
-  CComPtr<IDiaEnumDebugStreamData> Item;
+  ComPtr<IDiaEnumDebugStreamData> Item;
   VARIANT VarIndex;
   VarIndex.vt = VT_I4;
   VarIndex.lVal = Index;
-  if (S_OK != Enumerator->Item(VarIndex, &Item))
+  if (S_OK != Enumerator->Item(VarIndex, Item.GetAddressOf()))
     return nullptr;
 
   return std::unique_ptr<IPDBDataStream>(new DIADataStream(Item));
 }
 
 std::unique_ptr<IPDBDataStream> DIAEnumDebugStreams::getNext() {
-  CComPtr<IDiaEnumDebugStreamData> Item;
+  ComPtr<IDiaEnumDebugStreamData> Item;
   ULONG NumFetched = 0;
-  if (S_OK != Enumerator->Next(1, &Item, &NumFetched))
+  if (S_OK != Enumerator->Next(1, Item.GetAddressOf(), &NumFetched))
     return nullptr;
 
   return std::unique_ptr<IPDBDataStream>(new DIADataStream(Item));

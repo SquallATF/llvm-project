@@ -12,7 +12,7 @@
 using namespace llvm;
 using namespace llvm::pdb;
 
-DIATable::DIATable(CComPtr<IDiaTable> DiaTable) : Table(DiaTable) {}
+DIATable::DIATable(ComPtr<IDiaTable> DiaTable) : Table(DiaTable) {}
 
 uint32_t DIATable::getItemCount() const {
   LONG Count = 0;
@@ -20,13 +20,14 @@ uint32_t DIATable::getItemCount() const {
 }
 
 std::string DIATable::getName() const {
-  return invokeBstrMethod(*Table, &IDiaTable::get_name);
+  return invokeBstrMethod(*Table.Get(), &IDiaTable::get_name);
 }
 
 PDB_TableType DIATable::getTableType() const {
-  CComBSTR Name16;
-  if (S_OK != Table->get_name(&Name16))
+  _bstr_t Holder;
+  if (S_OK != Table->get_name(Holder.GetAddress()))
     return PDB_TableType::TableInvalid;
+  wchar_t *Name16 = Holder;
 
   if (Name16 == DiaTable_Symbols)
     return PDB_TableType::Symbols;
