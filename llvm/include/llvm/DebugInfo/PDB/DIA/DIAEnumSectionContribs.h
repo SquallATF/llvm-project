@@ -21,7 +21,7 @@ class DIAEnumSectionContribs : public IPDBEnumChildren<IPDBSectionContrib> {
 public:
   explicit DIAEnumSectionContribs(
       const DIASession &PDBSession,
-      CComPtr<IDiaEnumSectionContribs> DiaEnumerator);
+      ComPtr<IDiaEnumSectionContribs> DiaEnumerator);
 
   uint32_t getChildCount() const override;
   ChildTypePtr getChildAtIndex(uint32_t Index) const override;
@@ -30,7 +30,7 @@ public:
 
 private:
   const DIASession &Session;
-  CComPtr<IDiaEnumSectionContribs> Enumerator;
+  ComPtr<IDiaEnumSectionContribs> Enumerator;
 };
 } // namespace pdb
 } // namespace llvm

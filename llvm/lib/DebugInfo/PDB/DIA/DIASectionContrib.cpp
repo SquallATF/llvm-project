@@ -15,12 +15,12 @@ using namespace llvm;
 using namespace llvm::pdb;
 
 DIASectionContrib::DIASectionContrib(const DIASession &PDBSession,
-                                     CComPtr<IDiaSectionContrib> DiaSection)
-  : Session(PDBSession), Section(DiaSection) {}
+                                     ComPtr<IDiaSectionContrib> DiaSection)
+    : Session(PDBSession), Section(DiaSection) {}
 
 std::unique_ptr<PDBSymbolCompiland> DIASectionContrib::getCompiland() const {
-  CComPtr<IDiaSymbol> Symbol;
-  if (FAILED(Section->get_compiland(&Symbol)))
+  ComPtr<IDiaSymbol> Symbol;
+  if (FAILED(Section->get_compiland(Symbol.GetAddressOf())))
     return nullptr;
 
   auto RawSymbol = std::make_unique<DIARawSymbol>(Session, Symbol);
@@ -29,10 +29,10 @@ std::unique_ptr<PDBSymbolCompiland> DIASectionContrib::getCompiland() const {
 
 template <typename ArgType>
 ArgType
-PrivateGetDIAValue(IDiaSectionContrib *Section,
+PrivateGetDIAValue(const ComPtr<IDiaSectionContrib> &Section,
                    HRESULT (__stdcall IDiaSectionContrib::*Method)(ArgType *)) {
   ArgType Value;
-  if (S_OK == (Section->*Method)(&Value))
+  if (S_OK == (Section.Get()->*Method)(&Value))
     return static_cast<ArgType>(Value);
 
   return ArgType();

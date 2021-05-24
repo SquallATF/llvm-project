@@ -19,7 +19,7 @@ class DIASession;
 class DIASectionContrib : public IPDBSectionContrib {
 public:
   explicit DIASectionContrib(const DIASession &PDBSession,
-                             CComPtr<IDiaSectionContrib> DiaSection);
+                             ComPtr<IDiaSectionContrib> DiaSection);
 
   std::unique_ptr<PDBSymbolCompiland> getCompiland() const override;
   uint32_t getAddressSection() const override;
@@ -46,7 +46,7 @@ public:
 
 private:
   const DIASession &Session;
-  CComPtr<IDiaSectionContrib> Section;
+  ComPtr<IDiaSectionContrib> Section;
 };
 } // namespace pdb
 } // namespace llvm
