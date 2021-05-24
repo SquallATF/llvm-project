@@ -70,16 +70,12 @@ static Error LoadDIA(CComPtr<IDiaDataSource> &DiaDataSource) {
 
 // If the CoCreateInstance call above failed, msdia*.dll is not registered.
 // Try loading the DLL corresponding to the #included DIA SDK.
-#if !defined(_MSC_VER)
-  return llvm::make_error<PDBError>(pdb_error_code::dia_failed_loading);
-#else
   const wchar_t *msdia_dll = L"msdia140.dll";
   HRESULT HR;
   if (FAILED(HR = NoRegCoCreate(msdia_dll, CLSID_DiaSource, IID_IDiaDataSource,
                                 reinterpret_cast<LPVOID *>(&DiaDataSource))))
     return ErrorFromHResult(HR, "Calling NoRegCoCreate");
   return Error::success();
-#endif
 }
 
 DIASession::DIASession(CComPtr<IDiaSession> DiaSession) : Session(DiaSession) {}
