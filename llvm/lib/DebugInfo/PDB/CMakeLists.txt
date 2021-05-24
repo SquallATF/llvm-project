@@ -4,9 +4,13 @@ macro(add_pdb_impl_folder group)
 endmacro()
 
 if(LLVM_ENABLE_DIA_SDK)
-  find_package(DIASDK REQUIRED)
-  include_directories(SYSTEM "${DIASDK_INCLUDE_DIR}")
-  set(LIBPDB_ADDITIONAL_LIBRARIES DIASDK::Diaguids)
+  if(MINGW)
+    set(LIBPDB_ADDITIONAL_LIBRARIES diaguids)
+  else()
+    find_package(DIASDK REQUIRED)
+    include_directories(SYSTEM "${DIASDK_INCLUDE_DIR}")
+    set(LIBPDB_ADDITIONAL_LIBRARIES DIASDK::Diaguids)
+  endif()
 
   add_pdb_impl_folder(DIA
     DIA/DIADataStream.cpp
