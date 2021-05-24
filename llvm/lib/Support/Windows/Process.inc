@@ -234,6 +234,61 @@ static std::error_code GetExecutableName(SmallVectorImpl<char> &Filename) {
   return std::error_code();
 }
 
+#if defined(__MINGW32__)
+// Hack to detect mintty, ported from vim
+// https://fossies.org/linux/vim/src/iscygpty.c
+static bool IsMintty(HANDLE Console) {
+  const int Size = sizeof(FILE_NAME_INFO) + sizeof(WCHAR) * MAX_PATH;
+  char Buf[Size];
+  size_t Index = 0;
+
+  if (Console == INVALID_HANDLE_VALUE)
+    return false;
+  // Cygwin/msys's pty is a pipe.
+  if (GetFileType(Console) != FILE_TYPE_PIPE)
+    return false;
+  FILE_NAME_INFO *NameInfo = reinterpret_cast<FILE_NAME_INFO *>(Buf);
+  if (NameInfo == NULL)
+    return false;
+  // Check the name of the pipe:
+  // '\{cygwin,msys}-XXXXXXXXXXXXXXXX-ptyN-{from,to}-master'
+  if (GetFileInformationByHandleEx(Console, FileNameInfo, NameInfo, Size)) {
+    SmallVector<char, MAX_PATH> Res;
+    std::error_code EC = windows::UTF16ToUTF8(
+        NameInfo->FileName, NameInfo->FileNameLength / sizeof(WCHAR), Res);
+    if (EC) {
+      return false;
+    }
+    std::string PipeName = std::string(Res.data());
+    if (PipeName.find("\\cygwin-") == Index) {
+      Index += 8;
+    } else if (PipeName.find("\\msys-") == Index) {
+      Index += 6;
+    }
+    if (Index > 0) {
+      while (PipeName.length() > Index && isxdigit(PipeName[Index])) {
+        Index++;
+      }
+      if (PipeName.find("-pty", Index)) {
+        Index += 4;
+      } else {
+        Index = 0;
+      }
+      if (Index > 0) {
+        while (PipeName.length() > Index && isdigit(PipeName[Index])) {
+          Index++;
+        }
+        if (PipeName.find("-from-master", Index) != Index &&
+            PipeName.find("-to-master", Index) != Index) {
+          Index = 0;
+        }
+      }
+    }
+  }
+  return Index > 0;
+}
+#endif
+
 std::error_code
 windows::GetCommandLineArguments(SmallVectorImpl<const char *> &Args,
                                  BumpPtrAllocator &Alloc) {
@@ -288,7 +343,15 @@ bool Process::StandardErrIsDisplayed() { return FileDescriptorIsDisplayed(2); }
 
 bool Process::FileDescriptorIsDisplayed(int fd) {
   DWORD Mode; // Unused
-  return (GetConsoleMode((HANDLE)_get_osfhandle(fd), &Mode) != 0);
+  HANDLE Console;
+  Console = (HANDLE)_get_osfhandle(fd);
+  bool ret = (GetConsoleMode(Console, &Mode) != 0);
+#if defined(__MINGW32__)
+  if (!ret) {
+    ret = IsMintty(Console);
+  }
+#endif
+  return ret;
 }
 
 unsigned Process::StandardOutColumns() {
@@ -318,13 +381,21 @@ bool Process::StandardErrHasColors() { return FileDescriptorHasColors(2); }
 
 static bool UseANSI = false;
 void Process::UseANSIEscapeCodes(bool enable) {
+  DWORD Mode;
+  HANDLE Console;
 #if defined(ENABLE_VIRTUAL_TERMINAL_PROCESSING)
   if (enable) {
-    HANDLE Console = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD Mode;
+    Console = GetStdHandle(STD_OUTPUT_HANDLE);
     GetConsoleMode(Console, &Mode);
     Mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     SetConsoleMode(Console, Mode);
+  }
+#endif
+#if defined(__MINGW32__)
+  Console = GetStdHandle(STD_ERROR_HANDLE);
+  bool ret = (GetConsoleMode(Console, &Mode) != 0);
+  if (!ret) {
+    enable = enable || IsMintty(Console);
   }
 #endif
   UseANSI = enable;
