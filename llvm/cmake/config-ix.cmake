@@ -534,10 +534,12 @@ else ()
   endif ()
 endif ()
 
-if( MSVC )
-  set(SHLIBEXT ".lib")
-  set(stricmp "_stricmp")
-  set(strdup "_strdup")
+if( WIN32 )
+  if ( MSVC )
+    set(SHLIBEXT ".lib")
+    set(stricmp "_stricmp")
+    set(strdup "_strdup")
+  endif()
 
   # Allow setting clang-cl's /winsysroot flag.
   set(LLVM_WINSYSROOT "" CACHE STRING
@@ -573,7 +575,7 @@ if( MSVC )
   endif()
 else()
   set(LLVM_ENABLE_DIA_SDK 0)
-endif( MSVC )
+endif( WIN32 )
 
 if( LLVM_ENABLE_THREADS )
   # Check if threading primitives aren't supported on this platform

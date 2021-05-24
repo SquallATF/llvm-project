@@ -17,12 +17,12 @@ namespace pdb {
 class DIASession;
 class DIARawSymbol : public IPDBRawSymbol {
 public:
-  DIARawSymbol(const DIASession &PDBSession, CComPtr<IDiaSymbol> DiaSymbol);
+  DIARawSymbol(const DIASession &PDBSession, ComPtr<IDiaSymbol> DiaSymbol);
 
   void dump(raw_ostream &OS, int Indent, PdbSymbolIdField ShowIdFields,
             PdbSymbolIdField RecurseIdFields) const override;
 
-  CComPtr<IDiaSymbol> getDiaSymbol() const { return Symbol; }
+  ComPtr<IDiaSymbol> getDiaSymbol() const { return Symbol; }
 
   std::unique_ptr<IPDBEnumSymbols>
   findChildren(PDB_SymType Type) const override;
@@ -35,7 +35,7 @@ public:
                      uint32_t Section, uint32_t Offset) const override;
   std::unique_ptr<IPDBEnumSymbols>
   findChildrenByVA(PDB_SymType Type, StringRef Name, PDB_NameSearchFlags Flags,
-                   uint64_t VA) const override;
+                                                    uint64_t VA) const override;
   std::unique_ptr<IPDBEnumSymbols>
   findChildrenByRVA(PDB_SymType Type, StringRef Name, PDB_NameSearchFlags Flags,
                     uint32_t RVA) const override;
@@ -225,9 +225,9 @@ public:
 
 private:
   const DIASession &Session;
-  CComPtr<IDiaSymbol> Symbol;
+  ComPtr<IDiaSymbol> Symbol;
 };
-}
-}
+} // namespace pdb
+} // namespace llvm
 
 #endif

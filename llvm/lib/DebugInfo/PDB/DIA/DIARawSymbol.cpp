@@ -93,36 +93,36 @@ Variant VariantFromVARIANT(const VARIANT &V) {
 }
 
 template <typename ArgType>
-ArgType PrivateGetDIAValue(IDiaSymbol *Symbol,
+ArgType PrivateGetDIAValue(const ComPtr<IDiaSymbol> &Symbol,
                            HRESULT (__stdcall IDiaSymbol::*Method)(ArgType *)) {
   ArgType Value;
-  if (S_OK == (Symbol->*Method)(&Value))
+  if (S_OK == (Symbol.Get()->*Method)(&Value))
     return static_cast<ArgType>(Value);
 
   return ArgType();
 }
 
 template <typename ArgType, typename RetType>
-RetType PrivateGetDIAValue(IDiaSymbol *Symbol,
+RetType PrivateGetDIAValue(const ComPtr<IDiaSymbol> &Symbol,
                            HRESULT (__stdcall IDiaSymbol::*Method)(ArgType *)) {
   ArgType Value;
-  if (S_OK == (Symbol->*Method)(&Value))
+  if (S_OK == (Symbol.Get()->*Method)(&Value))
     return static_cast<RetType>(Value);
 
   return RetType();
 }
 
 std::string
-PrivateGetDIAValue(IDiaSymbol *Symbol,
+PrivateGetDIAValue(const ComPtr<IDiaSymbol> &Symbol,
                    HRESULT (__stdcall IDiaSymbol::*Method)(BSTR *)) {
-  return invokeBstrMethod(*Symbol, Method);
+  return invokeBstrMethod(*Symbol.Get(), Method);
 }
 
 codeview::GUID
-PrivateGetDIAValue(IDiaSymbol *Symbol,
+PrivateGetDIAValue(const ComPtr<IDiaSymbol> &Symbol,
                    HRESULT (__stdcall IDiaSymbol::*Method)(GUID *)) {
   GUID Result;
-  if (S_OK != (Symbol->*Method)(&Result))
+  if (S_OK != (Symbol.Get()->*Method)(&Result))
     return codeview::GUID();
 
   static_assert(sizeof(codeview::GUID) == sizeof(GUID),
@@ -134,38 +134,38 @@ PrivateGetDIAValue(IDiaSymbol *Symbol,
 
 template <typename PrintType, typename ArgType>
 void DumpDIAValueAs(llvm::raw_ostream &OS, int Indent, StringRef Name,
-                    IDiaSymbol *Symbol,
+                    const ComPtr<IDiaSymbol> &Symbol,
                     HRESULT (__stdcall IDiaSymbol::*Method)(ArgType *)) {
   ArgType Value;
-  if (S_OK == (Symbol->*Method)(&Value))
+  if (S_OK == (Symbol.Get()->*Method)(&Value))
     dumpSymbolField(OS, Name, static_cast<PrintType>(Value), Indent);
 }
 
 void DumpDIAIdValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
-                    IDiaSymbol *Symbol,
+                    const ComPtr<IDiaSymbol> &Symbol,
                     HRESULT (__stdcall IDiaSymbol::*Method)(DWORD *),
                     const IPDBSession &Session, PdbSymbolIdField FieldId,
                     PdbSymbolIdField ShowFlags, PdbSymbolIdField RecurseFlags) {
   DWORD Value;
-  if (S_OK == (Symbol->*Method)(&Value))
+  if (S_OK == (Symbol.Get()->*Method)(&Value))
     dumpSymbolIdField(OS, Name, Value, Indent, Session, FieldId, ShowFlags,
                       RecurseFlags);
 }
 
 template <typename ArgType>
 void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
-                  IDiaSymbol *Symbol,
+                  const ComPtr<IDiaSymbol> &Symbol,
                   HRESULT (__stdcall IDiaSymbol::*Method)(ArgType *)) {
   ArgType Value;
-  if (S_OK == (Symbol->*Method)(&Value))
+  if (S_OK == (Symbol.Get()->*Method)(&Value))
     dumpSymbolField(OS, Name, Value, Indent);
 }
 
 void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
-                  IDiaSymbol *Symbol,
+                  const ComPtr<IDiaSymbol> &Symbol,
                   HRESULT (__stdcall IDiaSymbol::*Method)(BSTR *)) {
   BSTR Value = nullptr;
-  if (S_OK != (Symbol->*Method)(&Value))
+  if (S_OK != (Symbol.Get()->*Method)(&Value))
     return;
   const char *Bytes = reinterpret_cast<const char *>(Value);
   ArrayRef<char> ByteArray(Bytes, ::SysStringByteLen(Value));
@@ -176,11 +176,11 @@ void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
 }
 
 void DumpDIAValue(llvm::raw_ostream &OS, int Indent, StringRef Name,
-                  IDiaSymbol *Symbol,
+                  const ComPtr<IDiaSymbol> &Symbol,
                   HRESULT (__stdcall IDiaSymbol::*Method)(VARIANT *)) {
   VARIANT Value;
   Value.vt = VT_EMPTY;
-  if (S_OK != (Symbol->*Method)(&Value))
+  if (S_OK != (Symbol.Get()->*Method)(&Value))
     return;
   Variant V = VariantFromVARIANT(Value);
 
@@ -198,21 +198,21 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const GUID &G) {
 } // namespace llvm
 
 DIARawSymbol::DIARawSymbol(const DIASession &PDBSession,
-                           CComPtr<IDiaSymbol> DiaSymbol)
+                           ComPtr<IDiaSymbol> DiaSymbol)
     : Session(PDBSession), Symbol(DiaSymbol) {}
 
 #define RAW_ID_METHOD_DUMP(Stream, Method, Session, FieldId, ShowFlags,        \
                            RecurseFlags)                                       \
-  DumpDIAIdValue(Stream, Indent, StringRef{#Method}, Symbol,                   \
+  DumpDIAIdValue(Stream, Indent, StringRef{#Method}, Symbol.Get(),             \
                  &IDiaSymbol::get_##Method, Session, FieldId, ShowFlags,       \
                  RecurseFlags);
 
 #define RAW_METHOD_DUMP(Stream, Method)                                        \
-  DumpDIAValue(Stream, Indent, StringRef{#Method}, Symbol,                     \
+  DumpDIAValue(Stream, Indent, StringRef{#Method}, Symbol.Get(),               \
                &IDiaSymbol::get_##Method);
 
 #define RAW_METHOD_DUMP_AS(Stream, Method, Type)                               \
-  DumpDIAValueAs<Type>(Stream, Indent, StringRef{#Method}, Symbol,             \
+  DumpDIAValueAs<Type>(Stream, Indent, StringRef{#Method}, Symbol.Get(),       \
                        &IDiaSymbol::get_##Method);
 
 void DIARawSymbol::dump(raw_ostream &OS, int Indent,
@@ -398,10 +398,11 @@ std::unique_ptr<IPDBEnumSymbols>
 DIARawSymbol::findChildren(PDB_SymType Type) const {
   enum SymTagEnum EnumVal = static_cast<enum SymTagEnum>(Type);
 
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
-  if (S_OK !=
-      Symbol->findChildrenEx(EnumVal, nullptr, nsNone, &DiaEnumerator)) {
-    if (S_OK != Symbol->findChildren(EnumVal, nullptr, nsNone, &DiaEnumerator))
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
+  if (S_OK != Symbol->findChildrenEx(EnumVal, nullptr, nsNone,
+                                     DiaEnumerator.GetAddressOf())) {
+    if (S_OK != Symbol->findChildren(EnumVal, nullptr, nsNone,
+                                     DiaEnumerator.GetAddressOf()))
       return nullptr;
   }
 
@@ -418,9 +419,9 @@ DIARawSymbol::findChildren(PDB_SymType Type, StringRef Name,
   DWORD CompareFlags = static_cast<DWORD>(Flags);
   wchar_t *Name16Str = reinterpret_cast<wchar_t *>(Name16.data());
 
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
-  if (S_OK !=
-      Symbol->findChildrenEx(EnumVal, Name16Str, CompareFlags, &DiaEnumerator))
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
+  if (S_OK != Symbol->findChildrenEx(EnumVal, Name16Str, CompareFlags,
+                                     DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
@@ -438,9 +439,10 @@ DIARawSymbol::findChildrenByAddr(PDB_SymType Type, StringRef Name,
   DWORD CompareFlags = static_cast<DWORD>(Flags);
   wchar_t *Name16Str = reinterpret_cast<wchar_t *>(Name16.data());
 
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
   if (S_OK != Symbol->findChildrenExByAddr(EnumVal, Name16Str, CompareFlags,
-                                           Section, Offset, &DiaEnumerator))
+                                           Section, Offset,
+                                           DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
@@ -457,9 +459,9 @@ DIARawSymbol::findChildrenByVA(PDB_SymType Type, StringRef Name,
   DWORD CompareFlags = static_cast<DWORD>(Flags);
   wchar_t *Name16Str = reinterpret_cast<wchar_t *>(Name16.data());
 
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
   if (S_OK != Symbol->findChildrenExByVA(EnumVal, Name16Str, CompareFlags, VA,
-                                         &DiaEnumerator))
+                                         DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
@@ -475,9 +477,9 @@ DIARawSymbol::findChildrenByRVA(PDB_SymType Type, StringRef Name,
   DWORD CompareFlags = static_cast<DWORD>(Flags);
   wchar_t *Name16Str = reinterpret_cast<wchar_t *>(Name16.data());
 
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
   if (S_OK != Symbol->findChildrenExByRVA(EnumVal, Name16Str, CompareFlags, RVA,
-                                          &DiaEnumerator))
+                                          DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
@@ -485,8 +487,9 @@ DIARawSymbol::findChildrenByRVA(PDB_SymType Type, StringRef Name,
 
 std::unique_ptr<IPDBEnumSymbols>
 DIARawSymbol::findInlineFramesByAddr(uint32_t Section, uint32_t Offset) const {
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
-  if (S_OK != Symbol->findInlineFramesByAddr(Section, Offset, &DiaEnumerator))
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
+  if (S_OK != Symbol->findInlineFramesByAddr(Section, Offset,
+                                             DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
@@ -494,8 +497,8 @@ DIARawSymbol::findInlineFramesByAddr(uint32_t Section, uint32_t Offset) const {
 
 std::unique_ptr<IPDBEnumSymbols>
 DIARawSymbol::findInlineFramesByRVA(uint32_t RVA) const {
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
-  if (S_OK != Symbol->findInlineFramesByRVA(RVA, &DiaEnumerator))
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
+  if (S_OK != Symbol->findInlineFramesByRVA(RVA, DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
@@ -503,16 +506,16 @@ DIARawSymbol::findInlineFramesByRVA(uint32_t RVA) const {
 
 std::unique_ptr<IPDBEnumSymbols>
 DIARawSymbol::findInlineFramesByVA(uint64_t VA) const {
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
-  if (S_OK != Symbol->findInlineFramesByVA(VA, &DiaEnumerator))
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
+  if (S_OK != Symbol->findInlineFramesByVA(VA, DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumSymbols>(Session, DiaEnumerator);
 }
 
 std::unique_ptr<IPDBEnumLineNumbers> DIARawSymbol::findInlineeLines() const {
-  CComPtr<IDiaEnumLineNumbers> DiaEnumerator;
-  if (S_OK != Symbol->findInlineeLines(&DiaEnumerator))
+  ComPtr<IDiaEnumLineNumbers> DiaEnumerator;
+  if (S_OK != Symbol->findInlineeLines(DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumLineNumbers>(DiaEnumerator);
@@ -521,9 +524,9 @@ std::unique_ptr<IPDBEnumLineNumbers> DIARawSymbol::findInlineeLines() const {
 std::unique_ptr<IPDBEnumLineNumbers>
 DIARawSymbol::findInlineeLinesByAddr(uint32_t Section, uint32_t Offset,
                                      uint32_t Length) const {
-  CComPtr<IDiaEnumLineNumbers> DiaEnumerator;
-  if (S_OK !=
-      Symbol->findInlineeLinesByAddr(Section, Offset, Length, &DiaEnumerator))
+  ComPtr<IDiaEnumLineNumbers> DiaEnumerator;
+  if (S_OK != Symbol->findInlineeLinesByAddr(Section, Offset, Length,
+                                             DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumLineNumbers>(DiaEnumerator);
@@ -531,8 +534,9 @@ DIARawSymbol::findInlineeLinesByAddr(uint32_t Section, uint32_t Offset,
 
 std::unique_ptr<IPDBEnumLineNumbers>
 DIARawSymbol::findInlineeLinesByRVA(uint32_t RVA, uint32_t Length) const {
-  CComPtr<IDiaEnumLineNumbers> DiaEnumerator;
-  if (S_OK != Symbol->findInlineeLinesByRVA(RVA, Length, &DiaEnumerator))
+  ComPtr<IDiaEnumLineNumbers> DiaEnumerator;
+  if (S_OK !=
+      Symbol->findInlineeLinesByRVA(RVA, Length, DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumLineNumbers>(DiaEnumerator);
@@ -540,8 +544,9 @@ DIARawSymbol::findInlineeLinesByRVA(uint32_t RVA, uint32_t Length) const {
 
 std::unique_ptr<IPDBEnumLineNumbers>
 DIARawSymbol::findInlineeLinesByVA(uint64_t VA, uint32_t Length) const {
-  CComPtr<IDiaEnumLineNumbers> DiaEnumerator;
-  if (S_OK != Symbol->findInlineeLinesByVA(VA, Length, &DiaEnumerator))
+  ComPtr<IDiaEnumLineNumbers> DiaEnumerator;
+  if (S_OK !=
+      Symbol->findInlineeLinesByVA(VA, Length, DiaEnumerator.GetAddressOf()))
     return nullptr;
 
   return std::make_unique<DIAEnumLineNumbers>(DiaEnumerator);
@@ -560,12 +565,14 @@ void DIARawSymbol::getDataBytes(llvm::SmallVector<uint8_t, 32> &bytes) const {
 }
 
 std::string DIARawSymbol::getUndecoratedNameEx(PDB_UndnameFlags Flags) const {
-  CComBSTR Result16;
-  if (S_OK != Symbol->get_undecoratedNameEx((DWORD)Flags, &Result16))
+  _bstr_t Result16;
+  if (S_OK !=
+      Symbol->get_undecoratedNameEx((DWORD)Flags, Result16.GetAddress()))
     return std::string();
 
-  const char *SrcBytes = reinterpret_cast<const char *>(Result16.m_str);
-  llvm::ArrayRef<char> SrcByteArray(SrcBytes, Result16.ByteLength());
+  const char *SrcBytes = reinterpret_cast<const char *>(Result16.GetBSTR());
+  llvm::ArrayRef<char> SrcByteArray(SrcBytes,
+                                    ::SysStringByteLen(Result16.GetBSTR()));
   std::string Result8;
   if (!llvm::convertUTF16ToUTF8String(SrcByteArray, Result8))
     return std::string();
@@ -772,8 +779,9 @@ std::string DIARawSymbol::getSourceFileName() const {
 }
 
 std::unique_ptr<IPDBLineNumber> DIARawSymbol::getSrcLineOnTypeDefn() const {
-  CComPtr<IDiaLineNumber> LineNumber;
-  if (FAILED(Symbol->getSrcLineOnTypeDefn(&LineNumber)) || !LineNumber)
+  ComPtr<IDiaLineNumber> LineNumber;
+  if (FAILED(Symbol->getSrcLineOnTypeDefn(LineNumber.GetAddressOf())) ||
+      !LineNumber)
     return nullptr;
 
   return std::make_unique<DIALineNumber>(LineNumber);
@@ -867,8 +875,9 @@ SymIndexId DIARawSymbol::getVirtualTableShapeId() const {
 
 std::unique_ptr<PDBSymbolTypeBuiltin>
 DIARawSymbol::getVirtualBaseTableType() const {
-  CComPtr<IDiaSymbol> TableType;
-  if (FAILED(Symbol->get_virtualBaseTableType(&TableType)) || !TableType)
+  ComPtr<IDiaSymbol> TableType;
+  if (FAILED(Symbol->get_virtualBaseTableType(TableType.GetAddressOf())) ||
+      !TableType)
     return nullptr;
 
   auto RawVT = std::make_unique<DIARawSymbol>(Session, TableType);
