@@ -15,14 +15,14 @@
 template <typename Obj>
 std::string invokeBstrMethod(Obj &Object,
                              HRESULT (__stdcall Obj::*Func)(BSTR *)) {
-  CComBSTR Str16;
-  HRESULT Result = (Object.*Func)(&Str16);
+  _bstr_t Str16;
+  HRESULT Result = (Object.*Func)(Str16.GetAddress());
   if (S_OK != Result)
     return std::string();
 
   std::string Str8;
-  llvm::ArrayRef<char> StrBytes(reinterpret_cast<char *>(Str16.m_str),
-                                Str16.ByteLength());
+  llvm::ArrayRef<char> StrBytes(reinterpret_cast<char *>(Str16.GetBSTR()),
+                                ::SysStringByteLen(Str16.GetBSTR()));
   llvm::convertUTF16ToUTF8String(StrBytes, Str8);
   return Str8;
 }

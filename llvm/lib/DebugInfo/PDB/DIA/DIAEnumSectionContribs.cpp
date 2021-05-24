@@ -14,8 +14,7 @@ using namespace llvm;
 using namespace llvm::pdb;
 
 DIAEnumSectionContribs::DIAEnumSectionContribs(
-    const DIASession &PDBSession,
-    CComPtr<IDiaEnumSectionContribs> DiaEnumerator)
+    const DIASession &PDBSession, ComPtr<IDiaEnumSectionContribs> DiaEnumerator)
     : Session(PDBSession), Enumerator(DiaEnumerator) {}
 
 uint32_t DIAEnumSectionContribs::getChildCount() const {
@@ -25,8 +24,8 @@ uint32_t DIAEnumSectionContribs::getChildCount() const {
 
 std::unique_ptr<IPDBSectionContrib>
 DIAEnumSectionContribs::getChildAtIndex(uint32_t Index) const {
-  CComPtr<IDiaSectionContrib> Item;
-  if (S_OK != Enumerator->Item(Index, &Item))
+  ComPtr<IDiaSectionContrib> Item;
+  if (S_OK != Enumerator->Item(Index, Item.GetAddressOf()))
     return nullptr;
 
   return std::unique_ptr<IPDBSectionContrib>(
@@ -34,9 +33,9 @@ DIAEnumSectionContribs::getChildAtIndex(uint32_t Index) const {
 }
 
 std::unique_ptr<IPDBSectionContrib> DIAEnumSectionContribs::getNext() {
-  CComPtr<IDiaSectionContrib> Item;
+  ComPtr<IDiaSectionContrib> Item;
   ULONG NumFetched = 0;
-  if (S_OK != Enumerator->Next(1, &Item, &NumFetched))
+  if (S_OK != Enumerator->Next(1, Item.GetAddressOf(), &NumFetched))
     return nullptr;
 
   return std::unique_ptr<IPDBSectionContrib>(

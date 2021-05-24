@@ -15,7 +15,7 @@ using namespace llvm;
 using namespace llvm::pdb;
 
 DIAEnumSymbols::DIAEnumSymbols(const DIASession &PDBSession,
-                               CComPtr<IDiaEnumSymbols> DiaEnumerator)
+                               ComPtr<IDiaEnumSymbols> DiaEnumerator)
     : Session(PDBSession), Enumerator(DiaEnumerator) {}
 
 uint32_t DIAEnumSymbols::getChildCount() const {
@@ -25,18 +25,19 @@ uint32_t DIAEnumSymbols::getChildCount() const {
 
 std::unique_ptr<PDBSymbol>
 DIAEnumSymbols::getChildAtIndex(uint32_t Index) const {
-  CComPtr<IDiaSymbol> Item;
-  if (S_OK != Enumerator->Item(Index, &Item))
+  ComPtr<IDiaSymbol> Item;
+  if (S_OK != Enumerator->Item(Index, Item.GetAddressOf()))
     return nullptr;
 
   std::unique_ptr<DIARawSymbol> RawSymbol(new DIARawSymbol(Session, Item));
-  return std::unique_ptr<PDBSymbol>(PDBSymbol::create(Session, std::move(RawSymbol)));
+  return std::unique_ptr<PDBSymbol>(
+      PDBSymbol::create(Session, std::move(RawSymbol)));
 }
 
 std::unique_ptr<PDBSymbol> DIAEnumSymbols::getNext() {
-  CComPtr<IDiaSymbol> Item;
+  ComPtr<IDiaSymbol> Item;
   ULONG NumFetched = 0;
-  if (S_OK != Enumerator->Next(1, &Item, &NumFetched))
+  if (S_OK != Enumerator->Next(1, Item.GetAddressOf(), &NumFetched))
     return nullptr;
 
   std::unique_ptr<DIARawSymbol> RawSymbol(new DIARawSymbol(Session, Item));

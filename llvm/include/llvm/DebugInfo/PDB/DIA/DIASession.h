@@ -21,7 +21,7 @@ class StringRef;
 namespace pdb {
 class DIASession : public IPDBSession {
 public:
-  explicit DIASession(CComPtr<IDiaSession> DiaSession);
+  explicit DIASession(ComPtr<IDiaSession> DiaSession);
 
   static Error createFromPdb(StringRef Path,
                              std::unique_ptr<IPDBSession> &Session);
@@ -86,7 +86,7 @@ public:
 
   std::unique_ptr<IPDBEnumFrameData> getFrameData() const override;
 private:
-  CComPtr<IDiaSession> Session;
+  ComPtr<IDiaSession> Session;
 };
 } // namespace pdb
 } // namespace llvm
