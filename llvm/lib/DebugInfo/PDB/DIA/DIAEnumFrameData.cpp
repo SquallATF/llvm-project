@@ -12,7 +12,7 @@
 
 using namespace llvm::pdb;
 
-DIAEnumFrameData::DIAEnumFrameData(CComPtr<IDiaEnumFrameData> DiaEnumerator)
+DIAEnumFrameData::DIAEnumFrameData(ComPtr<IDiaEnumFrameData> DiaEnumerator)
     : Enumerator(DiaEnumerator) {}
 
 uint32_t DIAEnumFrameData::getChildCount() const {
@@ -22,17 +22,17 @@ uint32_t DIAEnumFrameData::getChildCount() const {
 
 std::unique_ptr<IPDBFrameData>
 DIAEnumFrameData::getChildAtIndex(uint32_t Index) const {
-  CComPtr<IDiaFrameData> Item;
-  if (S_OK != Enumerator->Item(Index, &Item))
+  ComPtr<IDiaFrameData> Item;
+  if (S_OK != Enumerator->Item(Index, Item.GetAddressOf()))
     return nullptr;
 
   return std::unique_ptr<IPDBFrameData>(new DIAFrameData(Item));
 }
 
 std::unique_ptr<IPDBFrameData> DIAEnumFrameData::getNext() {
-  CComPtr<IDiaFrameData> Item;
+  ComPtr<IDiaFrameData> Item;
   ULONG NumFetched = 0;
-  if (S_OK != Enumerator->Next(1, &Item, &NumFetched))
+  if (S_OK != Enumerator->Next(1, Item.GetAddressOf(), &NumFetched))
     return nullptr;
 
   return std::unique_ptr<IPDBFrameData>(new DIAFrameData(Item));

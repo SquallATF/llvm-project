@@ -16,7 +16,7 @@ namespace llvm {
 namespace pdb {
 class DIADataStream : public IPDBDataStream {
 public:
-  explicit DIADataStream(CComPtr<IDiaEnumDebugStreamData> DiaStreamData);
+  explicit DIADataStream(ComPtr<IDiaEnumDebugStreamData> DiaStreamData);
 
   uint32_t getRecordCount() const override;
   std::string getName() const override;
@@ -25,9 +25,9 @@ public:
   void reset() override;
 
 private:
-  CComPtr<IDiaEnumDebugStreamData> StreamData;
+  ComPtr<IDiaEnumDebugStreamData> StreamData;
 };
-}
-}
+} // namespace pdb
+} // namespace llvm
 
 #endif

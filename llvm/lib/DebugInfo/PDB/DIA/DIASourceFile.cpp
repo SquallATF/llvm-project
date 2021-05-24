@@ -17,11 +17,11 @@ using namespace llvm;
 using namespace llvm::pdb;
 
 DIASourceFile::DIASourceFile(const DIASession &PDBSession,
-                             CComPtr<IDiaSourceFile> DiaSourceFile)
+                             ComPtr<IDiaSourceFile> DiaSourceFile)
     : Session(PDBSession), SourceFile(DiaSourceFile) {}
 
 std::string DIASourceFile::getFileName() const {
-  return invokeBstrMethod(*SourceFile, &IDiaSourceFile::get_fileName);
+  return invokeBstrMethod(*SourceFile.Get(), &IDiaSourceFile::get_fileName);
 }
 
 uint32_t DIASourceFile::getUniqueId() const {
@@ -51,8 +51,8 @@ PDB_Checksum DIASourceFile::getChecksumType() const {
 
 std::unique_ptr<IPDBEnumChildren<PDBSymbolCompiland>>
 DIASourceFile::getCompilands() const {
-  CComPtr<IDiaEnumSymbols> DiaEnumerator;
-  HRESULT Result = SourceFile->get_compilands(&DiaEnumerator);
+  ComPtr<IDiaEnumSymbols> DiaEnumerator;
+  HRESULT Result = SourceFile->get_compilands(DiaEnumerator.GetAddressOf());
   if (S_OK != Result)
     return nullptr;
 
