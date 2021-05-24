@@ -4,17 +4,23 @@ macro(add_pdb_impl_folder group)
 endmacro()
 
 if(LLVM_ENABLE_DIA_SDK)
-  include_directories(SYSTEM ${MSVC_DIA_SDK_DIR}/include)
-  set(LIBPDB_LINK_FOLDERS "${MSVC_DIA_SDK_DIR}\\lib")
+  if(MSVC)
+    include_directories(SYSTEM ${MSVC_DIA_SDK_DIR}/include)
+    set(LIBPDB_LINK_FOLDERS "${MSVC_DIA_SDK_DIR}\\lib")
 
-  if ("$ENV{VSCMD_ARG_TGT_ARCH}" STREQUAL "arm64")
-    set(LIBPDB_LINK_FOLDERS "${LIBPDB_LINK_FOLDERS}\\arm64")
-  elseif ("$ENV{VSCMD_ARG_TGT_ARCH}" STREQUAL "arm")
-    set(LIBPDB_LINK_FOLDERS "${LIBPDB_LINK_FOLDERS}\\arm")
-  elseif (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(LIBPDB_LINK_FOLDERS "${LIBPDB_LINK_FOLDERS}\\amd64")
+    if ("$ENV{VSCMD_ARG_TGT_ARCH}" STREQUAL "arm64")
+      set(LIBPDB_LINK_FOLDERS "${LIBPDB_LINK_FOLDERS}\\arm64")
+    elseif ("$ENV{VSCMD_ARG_TGT_ARCH}" STREQUAL "arm")
+      set(LIBPDB_LINK_FOLDERS "${LIBPDB_LINK_FOLDERS}\\arm")
+    elseif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+      set(LIBPDB_LINK_FOLDERS "${LIBPDB_LINK_FOLDERS}\\amd64")
+    endif()
+    file(TO_CMAKE_PATH "${LIBPDB_LINK_FOLDERS}\\diaguids.lib" LIBPDB_ADDITIONAL_LIBRARIES)
   endif()
-  file(TO_CMAKE_PATH "${LIBPDB_LINK_FOLDERS}\\diaguids.lib" LIBPDB_ADDITIONAL_LIBRARIES)
+
+  if(MINGW)
+    set(LIBPDB_ADDITIONAL_LIBRARIES diaguids)  
+  endif()
 
   add_pdb_impl_folder(DIA
     DIA/DIADataStream.cpp
