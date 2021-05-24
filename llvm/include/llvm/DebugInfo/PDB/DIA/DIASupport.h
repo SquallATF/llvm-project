@@ -13,6 +13,12 @@
 #ifndef LLVM_DEBUGINFO_PDB_DIA_DIASUPPORT_H
 #define LLVM_DEBUGINFO_PDB_DIA_DIASUPPORT_H
 
+#ifdef __MINGW32__
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#endif
+
 // Require at least Vista
 #define NTDDI_VERSION NTDDI_VISTA
 #define _WIN32_WINNT _WIN32_WINNT_VISTA
