@@ -99,6 +99,7 @@ AutoExporter::AutoExporter(
         "_environ",
         "___dso_handle",
         "__load_config_used",
+        "__clang_call_terminate",
         // These are the MinGW names that differ from the standard
         // ones (lacking an extra underscore).
         "_DllMain@12",
@@ -117,6 +118,7 @@ AutoExporter::AutoExporter(
         "environ",
         "__dso_handle",
         "_load_config_used",
+        "__clang_call_terminate",
         // These are the MinGW names that differ from the standard
         // ones (lacking an extra underscore).
         "DllMain",
