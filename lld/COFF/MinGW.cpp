@@ -98,6 +98,7 @@ AutoExporter::AutoExporter(
         "__fmode",
         "_environ",
         "___dso_handle",
+        "__clang_call_terminate",
         // These are the MinGW names that differ from the standard
         // ones (lacking an extra underscore).
         "_DllMain@12",
@@ -115,6 +116,7 @@ AutoExporter::AutoExporter(
         "_fmode",
         "environ",
         "__dso_handle",
+        "__clang_call_terminate",
         // These are the MinGW names that differ from the standard
         // ones (lacking an extra underscore).
         "DllMain",
