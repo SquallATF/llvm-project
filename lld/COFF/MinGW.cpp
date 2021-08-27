@@ -59,6 +59,7 @@ AutoExporter::AutoExporter(
       "libucrtapp",
       "libpthread",
       "libwinpthread",
+      "libuuid",
   };
 
   excludeObjects = {
