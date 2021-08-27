@@ -51,6 +51,7 @@ AutoExporter::AutoExporter(
       "libunwind",
       "libmsvcrt",
       "libucrtbase",
+      "libuuid",
   };
 
   excludeObjects = {
