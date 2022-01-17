@@ -266,6 +266,8 @@ bool mingw::link(ArrayRef<const char *> argsArr, llvm::raw_ostream &stdoutOS,
     add("-align:" + StringRef(a->getValue()));
   if (auto *a = args.getLastArg(OPT_heap))
     add("-heap:" + StringRef(a->getValue()));
+  if (auto *a = args.getLastArg(OPT_lto_O))
+    add("-opt:lldlto=" + StringRef(a->getValue()));
 
   if (auto *a = args.getLastArg(OPT_o))
     add("-out:" + StringRef(a->getValue()));
