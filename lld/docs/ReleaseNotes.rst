@@ -112,6 +112,10 @@ COFF Improvements
 * Omit section and label symbols from the symbol table.
   (`D113866 <https://reviews.llvm.org/D113866>`_)
 
+* Added autodetection of MSVC toolchain, a la clang-cl.  Also added /winsysroot
+  support for explicit specification of MSVC toolchain location.
+  (`D118070 <https://reviews.llvm.org/D118070>`_)
+
 MinGW Improvements
 ------------------
 
