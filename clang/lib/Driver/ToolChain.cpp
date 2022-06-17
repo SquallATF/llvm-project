@@ -1571,7 +1571,7 @@ ToolChain::UnwindLibType ToolChain::GetUnwindLibType(
     ToolChain::RuntimeLibType RtLibType = GetRuntimeLibType(Args);
     if (RtLibType == ToolChain::RLT_CompilerRT) {
       if (getTriple().isAndroid() || getTriple().isOSAIX() ||
-          getTriple().isOSSerenity())
+          getTriple().isOSSerenity() || getTriple().isWindowsGNUEnvironment())
         unwindLibType = ToolChain::UNW_CompilerRT;
       else
         unwindLibType = ToolChain::UNW_None;
