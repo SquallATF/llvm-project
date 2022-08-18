@@ -5527,12 +5527,12 @@ def nostartfiles : Flag<["-"], "nostartfiles">, Group<Link_Group>;
 def nostdinc : Flag<["-"], "nostdinc">,
   Visibility<[ClangOption, CLOption, DXCOption]>, Group<IncludePath_Group>;
 def nostdlibinc : Flag<["-"], "nostdlibinc">, Group<IncludePath_Group>;
-def nostdincxx : Flag<["-"], "nostdinc++">, Visibility<[ClangOption, CC1Option]>,
+def nostdincxx : Flag<["-"], "nostdinc++">, Visibility<[ClangOption, CLOption, CC1Option]>,
   Group<IncludePath_Group>,
   HelpText<"Disable standard #include directories for the C++ standard library">,
   MarshallingInfoNegativeFlag<HeaderSearchOpts<"UseStandardCXXIncludes">>;
 def nostdlib : Flag<["-"], "nostdlib">, Group<Link_Group>;
-def nostdlibxx : Flag<["-"], "nostdlib++">;
+def nostdlibxx : Flag<["-"], "nostdlib++">, Group<Link_Group>;
 def object : Flag<["-"], "object">;
 def o : JoinedOrSeparate<["-"], "o">,
   Flags<[NoXarchOption]>,
@@ -5732,7 +5732,7 @@ def std_EQ : Joined<["-", "--"], "std=">,
     ;
   }]>;
 def stdlib_EQ : Joined<["-", "--"], "stdlib=">,
-  Visibility<[ClangOption, CC1Option]>,
+  Visibility<[ClangOption, CLOption, CC1Option]>,
   HelpText<"C++ standard library to use">, Values<"libc++,libstdc++,platform">;
 def stdlibxx_isystem : JoinedOrSeparate<["-"], "stdlib++-isystem">,
   Group<clang_i_Group>,
