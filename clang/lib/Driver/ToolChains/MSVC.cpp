@@ -215,6 +215,12 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (TC.getVFS().exists(CRTPath))
     CmdArgs.push_back(Args.MakeArgString("-libpath:" + CRTPath));
 
+  // Add library directories for standard library shipped with the toolchain.
+  for (const auto &LibPath : TC.getFilePaths()) {
+    if (TC.getVFS().exists(LibPath))
+      CmdArgs.push_back(Args.MakeArgString("-libpath:" + LibPath));
+  }
+
   // SYCL offload compilation creates .llvm.offloading sections in each object
   // file to store device code and metadata. Suppress linker warning about
   // multiple sections with different attributes (LNK4078).
@@ -958,6 +964,36 @@ void MSVCToolChain::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   if (DriverArgs.hasArg(options::OPT_print_cxx_stdlib_include_dirs) &&
       !DriverArgs.hasArg(options::OPT_stdlib_EQ))
     AddMSVCStdlibIncludeArgs(DriverArgs, CC1Args);
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc) ||
+      DriverArgs.hasArg(options::OPT_nostdincxx))
+    return;
+
+  switch (GetCXXStdlibType(DriverArgs)) {
+  case ToolChain::CST_Libcxx: {
+    SmallString<128> P(getDriver().Dir);
+    llvm::sys::path::append(P, "..", "include");
+
+    std::string Version = detectLibcxxVersion(P);
+    if (Version.empty())
+      return;
+
+    // First add the per-target include path if it exists.
+    SmallString<128> TargetDir(P);
+    llvm::sys::path::append(TargetDir, getTripleString(), "c++", Version);
+    if (getVFS().exists(TargetDir))
+      addSystemInclude(DriverArgs, CC1Args, TargetDir);
+
+    // Second add the generic one.
+    SmallString<128> Dir(P);
+    llvm::sys::path::append(Dir, "c++", Version);
+    addSystemInclude(DriverArgs, CC1Args, Dir);
+    break;
+  }
+
+  default:
+    // TODO: Shall we report an error for other C++ standard libraries?
+    break;
+  }
 }
 
 StringRef MSVCToolChain::GetCXXStdlibName(const ArgList &DriverArgs) const {
