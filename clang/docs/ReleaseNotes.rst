@@ -471,6 +471,10 @@ Attribute Changes in Clang
 
 Windows Support
 ---------------
+- For the MinGW driver, added the options ``-mguard=none``, ``-mguard=cf`` and
+  ``-mguard=cf-nochecks`` (equivalent to ``/guard:cf-``, ``/guard:cf`` and
+  ``/guard:cf,nochecks`` in clang-cl) for enabling Control Flow Guard checks
+  and generation of address-taken function table.
 
 - Add support for MSVC-compatible ``/JMC``/``/JMC-`` flag in clang-cl (supports
   X86/X64/ARM/ARM64). ``/JMC`` could only be used when ``/Zi`` or ``/Z7`` is
