@@ -29,7 +29,7 @@
 //                  to use typedef'ed types on win.
 // Condition for WIN64 was modified in anticipation of 10.1 build compiler.
 
-#if defined(__cplusplus) && (KMP_OS_WINDOWS) && (!KMP_COMPILER_CLANG)
+#if defined(__cplusplus) && (KMP_OS_WINDOWS) && !defined(__MINGW32__)
 // create shortcuts for c99 complex types
 
 // Visual Studio cannot have function parameters that have the
