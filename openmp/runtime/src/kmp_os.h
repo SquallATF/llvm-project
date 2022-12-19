@@ -510,7 +510,7 @@ extern kmp_int64 __kmp_test_then_add64(volatile kmp_int64 *p, kmp_int64 v);
 extern kmp_uint64 __kmp_test_then_or64(volatile kmp_uint64 *p, kmp_uint64 v);
 extern kmp_uint64 __kmp_test_then_and64(volatile kmp_uint64 *p, kmp_uint64 v);
 
-#if KMP_ARCH_AARCH64 && KMP_COMPILER_MSVC && !KMP_COMPILER_CLANG
+#if KMP_ARCH_AARCH64 && KMP_COMPILER_MSVC
 #define KMP_TEST_THEN_INC64(p) _InterlockedExchangeAdd64((p), 1LL)
 #define KMP_TEST_THEN_INC_ACQ64(p) _InterlockedExchangeAdd64_acq((p), 1LL)
 #define KMP_TEST_THEN_ADD4_64(p) _InterlockedExchangeAdd64((p), 4LL)
