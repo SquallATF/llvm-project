@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   std::string Output;
   google::protobuf::util::JsonPrintOptions Options;
   Options.add_whitespace = true;
-  Options.always_print_primitive_fields = true;
+  Options.always_print_fields_with_no_presence = true;
   Options.preserve_proto_field_names = true;
   const auto JsonStatus =
       google::protobuf::util::MessageToJsonString(Response, &Output, Options);
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     clang::clangd::elog("Can not convert response ({0}) to JSON ({1}): {2}\n",
                         Response.DebugString(),
                         static_cast<int>(JsonStatus.code()),
-                        JsonStatus.message().as_string());
+                        JsonStatus.message());
     return -1;
   }
   llvm::outs() << Output;
