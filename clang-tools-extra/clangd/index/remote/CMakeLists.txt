@@ -26,7 +26,6 @@ if (CLANGD_ENABLE_REMOTE)
     clangdRemoteIndexProto
     clangdRemoteIndexServiceProto
     clangdRemoteMarshalling
-    clangBasic
     clangDaemon
     clangdSupport
 
