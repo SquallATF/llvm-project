@@ -12,6 +12,11 @@
 // This test does apply to aarch64 where Arm's AAPCS64 is followed. There they are different sizes.
 // XFAIL: target={{arm64|arm64e|armv(7|8)(l|m)?|powerpc|powerpc64}}-{{.+}}
 
+// In internal LLVM arm BMT tests the target is fixed to "arm-none-eabi", so the
+// "unsupported" cluase above does not work. TODO: find more generic way to
+// detect equal sizes of double and long double
+// XFAIL: LIBCXX-PICOLIBC-FIXME
+
 // MSVC configurations have long double equal to regular double on all
 // architectures.
 // XFAIL: target={{.+}}-pc-windows-msvc
