@@ -6,8 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// This test appears to hang with picolibc & qemu.
-// UNSUPPORTED: LIBCXX-PICOLIBC-FIXME
+// REQUIRES: long_test
 
 // <algorithm>
 
