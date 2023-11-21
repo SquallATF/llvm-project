@@ -30,9 +30,10 @@ using namespace driver;
 using namespace llvm::sys;
 
 Multilib::Multilib(StringRef GCCSuffix, StringRef OSSuffix,
-                   StringRef IncludeSuffix, const flags_list &Flags)
+                   StringRef IncludeSuffix, const flags_list &Flags,
+                   StringRef ExclusiveGroup)
     : GCCSuffix(GCCSuffix), OSSuffix(OSSuffix), IncludeSuffix(IncludeSuffix),
-      Flags(Flags) {
+      Flags(Flags), ExclusiveGroup(ExclusiveGroup) {
   assert(GCCSuffix.empty() ||
          (StringRef(GCCSuffix).front() == '/' && GCCSuffix.size() > 1));
   assert(OSSuffix.empty() ||
@@ -97,13 +98,39 @@ bool MultilibSet::select(const Multilib::flags_list &Flags,
                          llvm::SmallVector<Multilib> &Selected) const {
   llvm::StringSet<> FlagSet(expandFlags(Flags));
   Selected.clear();
-  llvm::copy_if(Multilibs, std::back_inserter(Selected),
-                [&FlagSet](const Multilib &M) {
-                  for (const std::string &F : M.flags())
-                    if (!FlagSet.contains(F))
-                      return false;
-                  return true;
-                });
+
+  // Decide which multilibs we're going to select at all
+  std::vector<bool> IsSelected(Multilibs.size(), false);
+  std::map<std::string, size_t> ExclusiveGroupMembers;
+  for (size_t i = 0, e = Multilibs.size(); i < e; ++i) {
+    const Multilib &M = Multilibs[i];
+
+    // If this multilib doesn't match all our flags, don't select it
+    if (!llvm::all_of(M.flags(), [&FlagSet](const std::string &F) {
+          return FlagSet.contains(F);
+        }))
+      continue;
+
+    // If this multilib has the same ExclusiveGroup as one we've already
+    // selected, de-select the previous one
+    const std::string &group = M.exclusiveGroup();
+    if (!group.empty()) {
+      auto it = ExclusiveGroupMembers.find(group);
+      if (it != ExclusiveGroupMembers.end())
+        IsSelected[it->second] = false;
+    }
+
+    // Select this multilib
+    IsSelected[i] = true;
+    if (!group.empty())
+      ExclusiveGroupMembers[group] = i;
+  }
+
+  // Now write the selected multilibs into the output
+  for (size_t i = 0, e = Multilibs.size(); i < e; ++i)
+    if (IsSelected[i])
+      Selected.push_back(Multilibs[i]);
+
   return !Selected.empty();
 }
 
@@ -140,6 +167,7 @@ static const VersionTuple MultilibVersionCurrent(1, 0);
 struct MultilibSerialization {
   std::string Dir;
   std::vector<std::string> Flags;
+  std::string ExclusiveGroup;
 };
 
 struct MultilibSetSerialization {
@@ -154,6 +182,7 @@ template <> struct llvm::yaml::MappingTraits<MultilibSerialization> {
   static void mapping(llvm::yaml::IO &io, MultilibSerialization &V) {
     io.mapRequired("Dir", V.Dir);
     io.mapRequired("Flags", V.Flags);
+    io.mapOptional("ExclusiveGroup", V.ExclusiveGroup);
   }
   static std::string validate(IO &io, MultilibSerialization &V) {
     if (StringRef(V.Dir).starts_with("/"))
@@ -216,7 +245,7 @@ MultilibSet::parseYaml(llvm::MemoryBufferRef Input,
     std::string Dir;
     if (M.Dir != ".")
       Dir = "/" + M.Dir;
-    Multilibs.emplace_back(Dir, Dir, Dir, M.Flags);
+    Multilibs.emplace_back(Dir, Dir, Dir, M.Flags, M.ExclusiveGroup);
   }
 
   return MultilibSet(std::move(Multilibs), std::move(MS.FlagMatchers));
