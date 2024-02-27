@@ -20,6 +20,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include <string>
 #include <system_error>
 
 using namespace clang::diag;
@@ -367,6 +368,12 @@ void tools::MinGW::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     if (!Args.hasArg(options::OPT_nostartfiles)) {
       // Add crtfastmath.o if available and fast math is enabled.
       TC.addFastMathRuntimeIfAvailable(Args, CmdArgs);
+
+      if (!Args.hasArg(options::OPT_shared)) {
+        std::string DefaultManifestPath = TC.GetFilePath("default-manifest.o");
+        if (DefaultManifestPath != "default-manifest.o")
+          CmdArgs.push_back(Args.MakeArgString(DefaultManifestPath));
+      }
 
       CmdArgs.push_back(Args.MakeArgString(TC.GetFilePath("crtend.o")));
     }
