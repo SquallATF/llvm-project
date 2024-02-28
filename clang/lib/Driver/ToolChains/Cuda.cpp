@@ -854,7 +854,7 @@ void CudaToolChain::addClangTargetOptions(
       return;
 
     addOpenMPDeviceRTL(getDriver(), DriverArgs, CC1Args, GpuArch.str(),
-                       getTriple());
+                       getTriple(), HostTC);
   }
 }
 
