@@ -606,6 +606,11 @@ Changes to LLDB
 
 * Support was added for handling the GDB Remote Protocol `x` packet in the format introduced by GDB 16.2. LLDB currently uses a different format for `x` and LLDB is now able to handle both formats. At some point in the future support for LLDB's format of `x` will be removed.
 
+* LLDB now supports hardware watchpoints for AArch64 Windows targets. Windows
+  does not provide API to query the number of supported hardware watchpoints.
+  Therefore current implementation allows only 1 watchpoint, as tested with
+  Windows 11 on the Microsoft SQ2 and Snapdragon Elite X platforms.
+
 Changes to BOLT
 ---------------------------------
 
