@@ -49,7 +49,7 @@
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-#if defined(_M_X64) && defined(_MSC_VER)
+#if defined(_M_X64) && defined(_MSC_VER) && !defined(_M_ARM64EC)
 #define _LIBCPP_INTRINSIC128 1
 [[nodiscard]] _LIBCPP_HIDE_FROM_ABI inline uint64_t __ryu_umul128(const uint64_t __a, const uint64_t __b, uint64_t* const __productHi) {
   return _umul128(__a, __b, __productHi);
