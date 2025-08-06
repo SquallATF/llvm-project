@@ -10,6 +10,9 @@ set( LLVM_LINK_COMPONENTS
   Support
 )
 
+set_target_properties(ZLIB::ZLIB PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
+set_target_properties(zstd::libzstd_shared PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "")
+
 if( LIBCLC_STANDALONE_BUILD )
   add_llvm_executable( prepare_builtins prepare-builtins.cpp )
   set( prepare_builtins_exe prepare_builtins )
