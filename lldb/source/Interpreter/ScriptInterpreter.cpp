@@ -116,7 +116,7 @@ lldb::StreamSP ScriptInterpreter::GetOpaqueTypeFromSBStream(
   return nullptr;
 }
 
-std::optional<MemoryRegionInfo>
+std::optional<lldb_private::MemoryRegionInfo>
 ScriptInterpreter::GetOpaqueTypeFromSBMemoryRegionInfo(
     const lldb::SBMemoryRegionInfo &mem_region) const {
   if (!mem_region.m_opaque_up)
