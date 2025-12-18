@@ -75,6 +75,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     windows/MainLoopWindows.cpp
     windows/PipeWindows.cpp
     windows/ProcessLauncherWindows.cpp
+    windows/PseudoConsole.cpp
     windows/ProcessRunLock.cpp
     )
 else()
