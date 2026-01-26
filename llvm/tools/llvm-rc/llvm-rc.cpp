@@ -426,6 +426,8 @@ RcOptions parseWindresOptions(ArrayRef<const char *> ArgsArr,
       Opts.Triple = "i686-w64-mingw32";
     else if (Value == "pe-x86-64")
       Opts.Triple = "x86_64-w64-mingw32";
+    else if (Value == "pe-aarch64-little")
+      Opts.Triple = "aarch64-w64-mingw32";
     else
       // Implicit extension; if the --target value isn't one of the known
       // BFD targets, allow setting the full triple string via this instead.
